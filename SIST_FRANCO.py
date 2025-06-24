@@ -148,10 +148,6 @@ def menu2():
 @login_required(role='interior')
 def menu3():
     return render_template('menu3.html', usuario=session.get('usuario'))
-@app.route('/menu3')
-@login_required(role='interior')
-def menu3():
-    return render_template('menu3.html', user=session.get('user'))
 
 # Rutas de productos
 @app.route('/lista1')
