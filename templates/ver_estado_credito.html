@@ -202,6 +202,7 @@
                                     <th>Factura Pago</th>
                                     <th>Fecha Pago</th>
                                     <th>Tipo de Pago</th>
+                                    <th>Monto</th> {# Nueva columna para el monto del pago #}
                                     <th>Estado</th> {# Columna para el estado #}
                                 </tr>
                             </thead>
@@ -212,6 +213,7 @@
                                         <td>{{ payment.factura }}</td>
                                         <td>{{ payment.fecha }}</td>
                                         <td>{{ payment.tipo }}</td>
+                                        <td>{{ '%.2f' | format(payment.monto | float) }}</td> {# Formatear el monto del pago #}
                                         <td><span class="badge status-badge registrado">Registrado</span></td>
                                     </tr>
                                 {% endfor %}
@@ -236,15 +238,15 @@
                     <form method="POST" action="{{ url_for('ver_estado_credito_por_dni', dni_cliente=credit_data['dni']) }}"> {# Action actualizada para DNI #}
                         <input type="hidden" name="next_slot_to_fill" value="{{ next_payment_slot }}">
                         <div class="row">
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-3 mb-3"> {# Ajuste de columna #}
                                 <label for="new_factura">Factura del Pago</label>
                                 <input type="text" name="new_factura" id="new_factura" class="form-control" required aria-label="Factura del Pago">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-3 mb-3"> {# Ajuste de columna #}
                                 <label for="new_fecha">Fecha del Pago</label>
                                 <input type="date" name="new_fecha" id="new_fecha" class="form-control" required aria-label="Fecha del Pago">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-3 mb-3"> {# Ajuste de columna #}
                                 <label for="new_tipo">Tipo de Pago</label>
                                 <select name="new_tipo" id="new_tipo" class="form-select" required aria-label="Tipo de Pago">
                                     <option value="efectivo">Efectivo</option>
@@ -252,6 +254,10 @@
                                     <option value="tarjeta">Tarjeta</option>
                                     <option value="otro">Otro</option>
                                 </select>
+                            </div>
+                            <div class="col-md-3 mb-3"> {# Nueva columna para el monto #}
+                                <label for="new_monto">Monto del Pago</label>
+                                <input type="number" step="0.01" name="new_monto" id="new_monto" class="form-control" required aria-label="Monto del Pago">
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary mt-3 w-100">
@@ -276,7 +282,7 @@
                     <ul class="list-group">
                         {% for exp_pago in expected_payment_dates %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Pago N° {{ exp_pago.slot }}: {{ exp_pago.fecha_esperada.strftime('%d/%m/%Y') }}
+                                Pago N° {{ exp_pago.slot }}: {{ exp_pago.fecha_esperada }}
                                 <span class="badge status-badge {{ exp_pago.estado }}">
                                     {{ exp_pago.estado|capitalize }}
                                 </span>
