@@ -52,11 +52,12 @@ SPREADSHEET_NAME = "rivadavia"
 # Función para obtener el cliente de Google Sheets
 def get_google_sheets_client():
     if not hasattr(app, 'gspread_client'):
-        # Carga las credenciales del servicio de Google Sheets
+        creds = None # Inicializar 'creds' a None al inicio de la función
+
         # Primero intenta cargar desde un archivo local 'credentials.json' (para desarrollo local)
         if os.path.exists("credentials.json"):
             try:
-                app.gspread_client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope))
+                creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
                 print("DEBUG: Credenciales cargadas desde 'credentials.json'.")
             except Exception as e:
                 raise Exception(f"ERROR: Error al cargar credenciales desde 'credentials.json': {e}")
@@ -65,34 +66,38 @@ def get_google_sheets_client():
             json_str = os.getenv("GOOGLE_SERVICE_ACCOUNT")
             
             # --- Logging adicional para depuración de GOOGLE_SERVICE_ACCOUNT ---
-            print(f"DEBUG_CREDS: Valor de GOOGLE_SERVICE_ACCOUNT (longitud: {len(json_str) if json_str else 0}): '{json_str[:100]}...'") # Primeros 100 caracteres
+            print(f"DEBUG_CREDS: Valor de GOOGLE_SERVICE_ACCOUNT (longitud: {len(json_str) if json_str else 0}): '{json_str[:100]}...'")
             # --- Fin Logging adicional ---
 
             if not json_str:
-                # Lanza una excepción si las credenciales no se encuentran en ningún lugar
                 raise Exception("ERROR: No se encontró 'GOOGLE_SERVICE_ACCOUNT' en variables de entorno ni 'credentials.json' local.")
             
             cred_dict = None
             try:
-                # *** ORDEN CORREGIDO: Intenta cargar como JSON plano primero (escenario más común de error) ***
+                # Intenta cargar como JSON plano primero
                 cred_dict = json.loads(json_str)
                 print("DEBUG_CREDS: Credenciales cargadas como JSON plano exitosamente.")
             except json.JSONDecodeError as plain_json_error:
                 print(f"DEBUG_CREDS: Advertencia: 'GOOGLE_SERVICE_ACCOUNT' no es JSON plano válido. Intentando decodificar de Base64. Error: {plain_json_error}")
                 try:
                     # Si falla como JSON plano, intenta decodificar de Base64
-                    # Captura TypeError para entradas no base64, JSONDecodeError si lo decodificado no es JSON,
-                    # y UnicodeDecodeError para el error específico que el usuario está viendo.
                     cred_dict = json.loads(base64.b64decode(json_str).decode('utf-8'))
                     print("DEBUG_CREDS: Credenciales decodificadas de Base64 y JSON cargado exitosamente.")
                 except (TypeError, json.JSONDecodeError, UnicodeDecodeError) as base64_error:
                     raise Exception(f"ERROR: La variable de entorno 'GOOGLE_SERVICE_ACCOUNT' no contiene JSON válido (ni plano ni Base64 codificado): {base64_error}")
             
-            # Asignación directa a app.gspread_client
-            if cred_dict: # Asegurarse de que cred_dict no es None antes de usarlo
-                app.gspread_client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(cred_dict, scope))
+            # Asignar el objeto ServiceAccountCredentials a 'creds'
+            if cred_dict:
+                creds = ServiceAccountCredentials.from_json_keyfile_dict(cred_dict, scope)
             else:
                 raise Exception("ERROR: cred_dict es None después de todos los intentos de carga. Esto no debería ocurrir.")
+        
+        # Autorizar al cliente de gspread solo si 'creds' ha sido exitosamente inicializado
+        if creds: # Se asegura que 'creds' tiene un valor antes de intentar autorizar
+            app.gspread_client = gspread.authorize(creds)
+        else:
+            # Este caso solo debería ocurrir si las excepciones anteriores no atraparon un problema
+            raise Exception("ERROR: No se pudieron obtener las credenciales de Google Sheets para la autorización.")
 
     return app.gspread_client
 
