@@ -115,9 +115,9 @@ CREDITOCAP_HEADERS = [
     "domicilio",                 # F (5)
     "articulo vendido",          # G (6)
     "tipo de pago",              # H (7)
-    "vendedor",                  # I (8) <-- POSICIÓN CORRECTA
-    "monto",                     # J (9) <-- POSICIÓN CORRECTA
-    "detalle de venta",          # K (10)
+    "detalle de venta",                  # I (8) <-- POSICIÓN CORRECTA
+    "vendedor",                     # J (9) <-- POSICIÓN CORRECTA
+    "monto",          # K (10)
     # Pagos adicionales (4 columnas por cada pago, hasta 5 pagos adicionales, haciendo un total de 31 columnas)
     "pago_adicional_1_factura",  # L (11)
     "pago_adicional_1_fecha",    # M (12)
@@ -492,9 +492,9 @@ def registro_credito():
                 request.form.get("domicilio"),    # F (Index 5)
                 request.form.get("articulo"),     # G (Index 6)
                 request.form.get("tipo_pago"),    # H (Index 7)
-                session.get("user"),              # I (Index 8) - Vendedor
-                monto_total,                      # J (Index 9) - Monto Total
-                request.form.get("detalle"),      # K (Index 10) - Detalle de Venta
+                request.form.get("detalle"),      # I (Index 8) - Detalle de Venta (Nueva Posición)
+                session.get("user"),              # J (Index 9) - Vendedor (Nueva Posición)
+                monto_total,      # K (Index 10) - Detalle de Venta
             ]
             
             # Los pagos adicionales deben venir después de Detalle de Venta (desde columna L, Index 11)
