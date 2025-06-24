@@ -1,61 +1,45 @@
 import os
 import json
-import gspread
 import re
-import requests
-import calendar
-import traceback
-from datetime import datetime
-from io import BytesIO
-from dotenv import load_dotenv
-from functools import wraps
+from flask import Flask, request, redirect, url_for, session, flash, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, make_response, send_file
-from fpdf import FPDF
-
-# Configuración inicial
-load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev-key-only-for-local')
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'clave_secreta_predeterminada')
 
-# Configuración de Google Sheets
 SCOPES = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-SPREADSHEET_NAME = "rivadavia"
 
-# Configuración de usuarios (en producción usar base de datos)
-# --- USUARIOS Y ROLES ---
-# IMPORTANTE: ESTE DICCIONARIO CON CONTRASEÑAS HARDCODEADAS ES UNA VULNERABILIDAD DE SEGURIDAD.
-# PARA PRODUCCIÓN, DEBERÍAS HASHEAR LAS CONTRASEÑAS Y ALMACENAR LOS USUARIOS EN UNA BASE DE DATOS.
-# TODAS LAS CONTRASEÑAS DEBEN SER HASHEADAS CON generate_password_hash().
+# --- Usuarios y roles ---
 USERS = {
     "admin": {
         "password": generate_password_hash(os.getenv('ADMIN_PASSWORD', 'admin123')),
         "role": "admin"
     },
     "cristian": {
-        "password": generate_password_hash(os.getenv('CRISTIAN_PASSWORD', 'rivadavia620')), # Contraseña hasheada
+        "password": generate_password_hash(os.getenv('CRISTIAN_PASSWORD', 'rivadavia620')),
         "role": "supervisor"
     },
     "delfi": {
-        "password": generate_password_hash(os.getenv('DELFI_PASSWORD', 'rivadavia620')), # Contraseña hasheada
+        "password": generate_password_hash(os.getenv('DELFI_PASSWORD', 'rivadavia620')),
         "role": "supervisor"
     },
     "trento": {
-        "password": generate_password_hash(os.getenv('TRENTO_PASSWORD', 'trento')), # Contraseña hasheada
+        "password": generate_password_hash(os.getenv('TRENTO_PASSWORD', 'trento')),
         "role": "supervisor"
     },
     "tete": {
-        "password": generate_password_hash(os.getenv('TETE_PASSWORD', 'tete123')), # Contraseña hasheada
+        "password": generate_password_hash(os.getenv('TETE_PASSWORD', 'tete123')),
         "role": "interior"
     },
     "int2": {
-        "password": generate_password_hash(os.getenv('INT2_PASSWORD', 'int456')), # Contraseña hasheada
+        "password": generate_password_hash(os.getenv('INT2_PASSWORD', 'int456')),
         "role": "interior"
     },
     "int3": {
-        "password": generate_password_hash(os.getenv('INT3_PASSWORD', 'int789')), # Contraseña hasheada
+        "password": generate_password_hash(os.getenv('INT3_PASSWORD', 'int789')),
         "role": "interior"
     }
 }
@@ -70,7 +54,6 @@ def login_required(role=None):
                 return redirect(url_for('login'))
             if role and session.get('role') != role:
                 flash("No tienes permisos para acceder a esta página.", "danger")
-                # Redirige al menú del rol actual si no tiene permiso para el solicitado
                 current_role_menu = {
                     "admin": "menu1",
                     "supervisor": "menu2",
@@ -81,9 +64,8 @@ def login_required(role=None):
         return decorated_function
     return decorator
 
-# Helpers
+# --- Helpers ---
 def get_google_sheets_client():
-    """Obtiene el cliente autorizado de Google Sheets"""
     if os.path.exists("credentials.json"):
         creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", SCOPES)
     else:
@@ -92,25 +74,39 @@ def get_google_sheets_client():
     return gspread.authorize(creds)
 
 def get_drive_file_id(url):
-    """Extrae el ID de un archivo de Google Drive de varias URLs"""
     if not url:
         return ""
     match_id = re.search(r'(?:/d/|id=)([a-zA-Z0-9_-]+)', url)
     return match_id.group(1) if match_id else ""
 
-def login_required(role=None):
-    """Decorador para rutas que requieren autenticación"""
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not session.get('logged_in'):
-                return redirect(url_for('login'))
-            if role and session.get('role') != role:
-                flash("No tienes permisos para acceder a esta página", "danger")
-                return redirect(url_for('login'))
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
+# --- Rutas ---
+@app.route('/')
+def home():
+    return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        usuario = request.form.get('usuario', '').strip()
+        contraseña = request.form.get('contraseña', '').strip()
+
+        user = USERS.get(usuario)
+        if user and check_password_hash(user['password'], contraseña):
+            session['logged_in'] = True
+            session['usuario'] = usuario
+            session['role'] = user['role']
+
+            role_redirect = {
+                "admin": "menu1",
+                "supervisor": "menu2",
+                "interior": "menu3"
+            }
+            return redirect(url_for(role_redirect.get(user['role'], 'login')))
+        else:
+            flash("Usuario o contraseña incorrectos", "danger")
+
+    return render_template('login.html')
+
 
 # Rutas de autenticación
 @app.route('/')
@@ -120,24 +116,25 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = USERS.get(username)
+        usuario = request.form.get('usuario', '').strip()
+        contraseña = request.form.get('contraseña', '').strip()
 
-        if user and check_password_hash(user["password"], password):
+        user = USERS.get(usuario)
+        if user and check_password_hash(user['password'], contraseña):
             session['logged_in'] = True
-            session['user'] = username
-            session['role'] = user["role"]
-
-            if user["role"] == "admin":
-                return redirect(url_for('menu1'))
-            elif user["role"] == "supervisor":
-                return redirect(url_for('menu2'))
-            elif user["role"] == "interior":
-                return redirect(url_for('menu3'))
-        
-        flash("Usuario o contraseña incorrectos", "danger")
-
+            session['usuario'] = usuario
+            session['role'] = user['role']
+            
+            # Redirecciona al menú según el rol
+            role_redirect = {
+                "admin": "menu1",
+                "supervisor": "menu2",
+                "interior": "menu3"
+            }
+            return redirect(url_for(role_redirect.get(user['role'], 'login')))
+        else:
+            flash("Usuario o contraseña incorrectos", "danger")
+    
     return render_template('login.html')
 
 @app.route('/logout')
