@@ -6,248 +6,163 @@ from dotenv import load_dotenv
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta
 import locale
-import traceback # Importar para depuración
-import re # Importar para usar expresiones regulares
-import requests # Importar para hacer peticiones HTTP a URLs de imagen
-from werkzeug.security import generate_password_hash, check_password_hash # Importar para hashing de contraseñas
-from functools import wraps # Importar wraps para el decorador
-import calendar # Importar el módulo calendar
-import base64 # Importar para decodificar Base64
-
-# Para la generación de PDF
+import traceback
+import re
+import requests
+from functools import wraps
+import calendar
+import base64
 from fpdf import FPDF
 import io
 
-# Configurar idioma español para los meses y fechas
-# Intenta con 'es_ES.utf8' para Linux/macOS o 'Spanish_Spain.1252' para Windows
-# Si falla, usa una configuración más genérica o vacío
+# Configuración de idioma
 try:
     locale.setlocale(locale.LC_TIME, 'es_ES.utf8')
 except locale.Error:
     try:
-        locale.setlocale(locale.LC_TIME, 'es_AR.utf8') # Para Argentina específicamente
+        locale.setlocale(locale.LC_TIME, 'es_AR.utf8')
     except locale.Error:
-        locale.setlocale(locale.LC_TIME, '') # Configuración genérica del sistema
-
-# Cargar variables de entorno desde el archivo .env
-load_dotenv()
+        locale.setlocale(locale.LC_TIME, '')
 
 app = Flask(__name__)
-# Obtener la clave secreta de las variables de entorno o usar una por defecto para desarrollo
-# IMPORTANTE: CAMBIA 'una_clave_secreta_muy_segura_para_produccion' EN RENDER CON UNA CLAVE LARGA Y ALEATORIA.
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'una_clave_secreta_muy_segura_para_produccion')
+app.secret_key = 'clave_secreta_para_sesiones'  # Clave fija para las sesiones
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 # --- CONFIGURACIÓN GOOGLE SHEETS ---
-# Define los alcances de acceso para Google Sheets y Drive
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 
-# Carga las credenciales del servicio de Google Sheets
-# Primero intenta cargar desde un archivo local 'credentials.json' (para desarrollo local)
 if os.path.exists("credentials.json"):
-    try:
-        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
-        print("DEBUG: Credenciales cargadas desde 'credentials.json'.")
-    except Exception as e:
-        raise Exception(f"ERROR: Error al cargar credenciales desde 'credentials.json': {e}")
+    creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
 else:
-    # Si no encuentra el archivo, intenta cargar desde la variable de entorno (para Render/producción)
     json_str = os.getenv("GOOGLE_SERVICE_ACCOUNT")
-    
-    # --- Logging adicional para depuración ---
-    # Imprime los primeros 50 caracteres para evitar mostrar toda la clave si es muy larga,
-    # pero para verificar si hay algo.
-    print(f"DEBUG: Valor de GOOGLE_SERVICE_ACCOUNT (primeros 50 chars): {json_str[:50]}..." if json_str else "DEBUG: GOOGLE_SERVICE_ACCOUNT está vacía o no definida.")
-    # --- Fin Logging adicional ---
-
     if not json_str:
-        # Lanza una excepción si las credenciales no se encuentran en ningún lugar
         raise Exception("ERROR: No se encontró 'GOOGLE_SERVICE_ACCOUNT' en variables de entorno ni 'credentials.json' local.")
     
-    # Decodificar el Base64 si la variable de entorno se cargó como tal (práctica segura)
     try:
-        # Esto asume que el JSON está codificado en Base64. Si no, quita el b64decode.
         cred_dict = json.loads(base64.b64decode(json_str).decode('utf-8'))
-        print("DEBUG: Credenciales decodificadas de Base64 y JSON cargado exitosamente.")
-    except (TypeError, json.JSONDecodeError) as e: # Catch TypeError for non-base64 input
-        # Si no es Base64 válido o JSON inválido, asume que es JSON en texto plano
-        print(f"Advertencia: 'GOOGLE_SERVICE_ACCOUNT' no es una cadena Base64 válida o JSON inválido. Intentando interpretar como JSON plano. Error: {e}")
+    except (TypeError, json.JSONDecodeError) as e:
         try:
             cred_dict = json.loads(json_str)
-            print("DEBUG: Credenciales cargadas como JSON plano exitosamente.")
         except json.JSONDecodeError as json_e:
-            raise Exception(f"ERROR: La variable de entorno 'GOOGLE_SERVICE_ACCOUNT' no contiene JSON válido ni Base64 válido: {json_e}")
+            raise Exception(f"ERROR: La variable de entorno 'GOOGLE_SERVICE_ACCOUNT' no contiene JSON válido: {json_e}")
 
     creds = ServiceAccountCredentials.from_json_keyfile_dict(cred_dict, scope)
 
-# Autoriza al cliente de gspread con las credenciales obtenidas
 client = gspread.authorize(creds)
 
-# --- ENCABEZADOS ESPERADOS PARA LA HOJA "creditocap" ---
-# ¡IMPORTANTE! ESTA LISTA DEBE COINCIDIR EXACTAMENTE EN ORDEN Y NOMBRE
-# CON LA PRIMERA FILA (ENCABEZADOS) DE TU HOJA DE GOOGLE SHEETS "creditocap".
-# Se ha ajustado el orden de 'vendedor', 'monto' y 'detalle de venta'.
+# --- ENCABEZADOS ESPERADOS ---
 CREDITOCAP_HEADERS = [
-    "n° de factura",             # A (0)
-    "fecha de venta",            # B (1)
-    "nombre completo",           # C (2)
-    "dni",                       # D (3)
-    "tel",                       # E (4)
-    "domicilio",                 # F (5)
-    "articulo vendido",          # G (6)
-    "tipo de pago",              # H (7)
-    "vendedor",                  # I (8) <-- POSICIÓN CORRECTA
-    "monto",                     # J (9) <-- POSICIÓN CORRECTA
-    "detalle de venta",          # K (10)
-    # Pagos adicionales (4 columnas por cada pago, hasta 5 pagos adicionales, haciendo un total de 31 columnas)
-    "pago_adicional_1_factura",  # L (11)
-    "pago_adicional_1_fecha",    # M (12)
-    "pago_adicional_1_tipo",     # N (13)
-    "monto_adicional_1",         # O (14)
-    "pago_adicional_2_factura",  # P (15)
-    "pago_adicional_2_fecha",    # Q (16)
-    "pago_adicional_2_tipo",     # R (17)
-    "monto_adicional_2",         # S (18)
-    "pago_adicional_3_factura",  # T (19)
-    "pago_adicional_3_fecha",    # U (20)
-    "pago_adicional_3_tipo",     # V (21)
-    "monto_adicional_3",         # W (22)
-    "pago_adicional_4_factura",  # X (23)
-    "pago_adicional_4_fecha",    # Y (24)
-    "pago_adicional_4_tipo",     # Z (25)
-    "monto_adicional_4",         # AA (26)
-    "pago_adicional_5_factura",  # AB (27)
-    "pago_adicional_5_fecha",    # AC (28)
-    "pago_adicional_5_tipo",     # AD (29)
-    "monto_adicional_5"          # AE (30)
+    "n° de factura", "fecha de venta", "nombre completo", "dni", "tel", "domicilio",
+    "articulo vendido", "tipo de pago", "vendedor", "monto", "detalle de venta",
+    "pago_adicional_1_factura", "pago_adicional_1_fecha", "pago_adicional_1_tipo", "monto_adicional_1",
+    "pago_adicional_2_factura", "pago_adicional_2_fecha", "pago_adicional_2_tipo", "monto_adicional_2",
+    "pago_adicional_3_factura", "pago_adicional_3_fecha", "pago_adicional_3_tipo", "monto_adicional_3",
+    "pago_adicional_4_factura", "pago_adicional_4_fecha", "pago_adicional_4_tipo", "monto_adicional_4",
+    "pago_adicional_5_factura", "pago_adicional_5_fecha", "pago_adicional_5_tipo", "monto_adicional_5"
 ]
 
-
-# --- USUARIOS Y ROLES ---
-# IMPORTANTE: ESTE DICCIONARIO CON CONTRASEÑAS HARDCODEADAS ES UNA VULNERABILIDAD DE SEGURIDAD.
-# PARA PRODUCCIÓN, DEBERÍAS HASHEAR LAS CONTRASEÑAS Y ALMACENAR LOS USUARIOS EN UNA BASE DE DATOS.
-# TODAS LAS CONTRASEÑAS DEBEN SER HASHEADAS CON generate_password_hash().
+# --- USUARIOS Y ROLES (CONTRASEÑAS EN TEXTO PLANO) ---
 USERS = {
     "admin": {
-        "password": generate_password_hash(os.getenv('ADMIN_PASSWORD', 'admin123')),
+        "password": "admin123",  # Contraseña en texto plano
         "role": "admin"
     },
     "cristian": {
-        "password": generate_password_hash(os.getenv('CRISTIAN_PASSWORD', 'rivadavia620')), # Contraseña hasheada
+        "password": "rivadavia620",
         "role": "supervisor"
     },
     "delfi": {
-        "password": generate_password_hash(os.getenv('DELFI_PASSWORD', 'rivadavia620')), # Contraseña hasheada
+        "password": "rivadavia620",
         "role": "supervisor"
     },
     "trento": {
-        "password": generate_password_hash(os.getenv('TRENTO_PASSWORD', 'trento')), # Contraseña hasheada
+        "password": "trento",
         "role": "supervisor"
     },
     "tete": {
-        "password": generate_password_hash(os.getenv('TETE_PASSWORD', 'tete123')), # Contraseña hasheada
+        "password": "tete123",
         "role": "interior"
     },
     "int2": {
-        "password": generate_password_hash(os.getenv('INT2_PASSWORD', 'int456')), # Contraseña hasheada
+        "password": "int456",
         "role": "interior"
     },
     "int3": {
-        "password": generate_password_hash(os.getenv('INT3_PASSWORD', 'int789')), # Contraseña hasheada
+        "password": "int789",
         "role": "interior"
     }
 }
 
-# --- Decorador para rutas que requieren autenticación ---
+# --- Decorador para rutas protegidas ---
 def login_required(role=None):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not session.get('logged_in'):
-                flash("Por favor, inicia sesión para acceder a esta página.", "info")
+                flash("Por favor inicia sesión", "warning")
                 return redirect(url_for('login'))
             if role and session.get('role') != role:
-                flash("No tienes permisos para acceder a esta página.", "danger")
-                # Redirige al menú del rol actual si no tiene permiso para el solicitado
-                current_role_menu = {
-                    "admin": "menu1",
-                    "supervisor": "menu2",
-                    "interior": "menu3"
-                }.get(session.get('role'), 'login')
-                return redirect(url_for(current_role_menu))
+                flash("No tienes permisos", "danger")
+                return redirect(url_for('login'))
             return f(*args, **kwargs)
         return decorated_function
     return decorator
 
-# --- RUTAS DE LA APLICACIÓN ---
-
-# Redirige la ruta raíz a la página de login
+# --- RUTAS PRINCIPALES ---
 @app.route('/')
 def home():
     return redirect(url_for('login'))
 
-# Ruta para el login de usuarios
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username') # Obtiene el nombre de usuario del formulario
-        password = request.form.get('password') # Obtiene la contraseña del formulario
+        username = request.form.get('username')
+        password = request.form.get('password')
         
-        print(f"DEBUG_LOGIN: Intento de login para usuario: '{username}'")
-        print(f"DEBUG_LOGIN: Contraseña recibida (sin hash): '{password}' (¡No mostrar en producción!)") # Cuidado al imprimir contraseñas
+        user = USERS.get(username)
         
-        user = USERS.get(username) # Busca el usuario en el diccionario USERS
-
-        if user:
-            print(f"DEBUG_LOGIN: Usuario '{username}' encontrado en la lista de usuarios.")
-            if check_password_hash(user["password"], password):
-                print(f"DEBUG_LOGIN: Contraseña para '{username}' verificada correctamente. ¡Login exitoso!")
-                session['logged_in'] = True # Establece la sesión como logueada
-                session['user'] = username # Guarda el nombre de usuario en la sesión
-                session['role'] = user["role"] # Guarda el rol del usuario en la sesión
-
-                # Redirige según el rol del usuario
-                if user["role"] == "admin":
-                    print(f"DEBUG_LOGIN: Redirigiendo a menu1 para admin.")
-                    return redirect(url_for('menu1'))
-                elif user["role"] == "supervisor":
-                    print(f"DEBUG_LOGIN: Redirigiendo a menu2 para supervisor.")
-                    # Pasa el usuario y rol a menu2
-                    return redirect(url_for('menu2', username=session['user'], role=session['role']))
-                elif user["role"] == "interior":
-                    print(f"DEBUG_LOGIN: Redirigiendo a menu3 para interior.")
-                    return redirect(url_for('menu3'))
+        # Verificación directa de contraseña en texto plano
+        if user and user['password'] == password:
+            session['logged_in'] = True
+            session['user'] = username
+            session['role'] = user['role']
+            
+            # Redirección según rol
+            if user['role'] == 'admin':
+                return redirect(url_for('menu1'))
+            elif user['role'] == 'supervisor':
+                return redirect(url_for('menu2'))
             else:
-                print(f"DEBUG_LOGIN: Fallo de verificación de contraseña para '{username}'.")
-                flash("Usuario o contraseña incorrectos", "danger") # Mensaje de error si las credenciales son inválidas
+                return redirect(url_for('menu3'))
         else:
-            print(f"DEBUG_LOGIN: Usuario '{username}' NO encontrado en la lista de usuarios.")
-            flash("Usuario o contraseña incorrectos", "danger") # Mensaje de error si las credenciales son inválidas
+            flash("Usuario o contraseña incorrectos", "danger")
 
-    return render_template('login.html') # Renderiza la plantilla de login
+    return render_template('login.html')
 
-# Ruta para cerrar sesión
 @app.route('/logout')
 def logout():
-    session.clear() # Limpia todas las variables de sesión
-    print("DEBUG_LOGOUT: Sesión limpiada. Redirigiendo a login.")
-    return redirect(url_for('login')) # Redirige a la página de login
+    session.clear()
+    return redirect(url_for('login'))
 
-# Rutas de menú para diferentes roles
+# --- RUTAS DE MENÚ ---
 @app.route('/menu1')
 @login_required(role='admin')
 def menu1():
-    return render_template('menu1.html', user=session.get('user')) # Renderiza el menú para admin
+    return render_template('menu1.html', user=session.get('user'))
 
 @app.route('/menu2')
 @login_required(role='supervisor')
 def menu2():
-    # Asegúrate de pasar el usuario y rol a la plantilla, ya que el decorador ya validó el acceso
-    return render_template('menu2.html', username=session.get('user'), role=session.get('role')) # Renderiza el menú para supervisor, pasando username y role
+    return render_template('menu2.html', username=session.get('user'), role=session.get('role'))
 
 @app.route('/menu3')
 @login_required(role='interior')
 def menu3():
     return render_template('menu3.html', user=session.get('user'))
+
+# (Aquí irían el resto de tus rutas para manejar Google Sheets, PDFs, etc.)
+
 
 # Rutas de productos
 @app.route('/lista1')
