@@ -105,7 +105,7 @@ def get_google_sheets_client():
 # --- ENCABEZADOS ESPERADOS PARA LA HOJA "creditocap" ---
 # ¡IMPORTANTE! ESTA LISTA DEBE COINCIDIR EXACTAMENTE EN ORDEN Y NOMBRE
 # CON LA PRIMERA FILA (ENCABEZADOS) DE TU HOJA DE GOOGLE SHEETS "creditocap".
-# Se ha ajustado el orden de 'vendedor', 'monto' y 'detalle de venta'.
+# Se ha ajustado el orden de 'detalle de venta', 'vendedor' y 'monto'.
 CREDITOCAP_HEADERS = [
     "n° de factura",             # A (0)
     "fecha de venta",            # B (1)
@@ -115,9 +115,9 @@ CREDITOCAP_HEADERS = [
     "domicilio",                 # F (5)
     "articulo vendido",          # G (6)
     "tipo de pago",              # H (7)
-    "detalle de venta",                  # I (8) <-- POSICIÓN CORRECTA
-    "vendedor",                     # J (9) <-- POSICIÓN CORRECTA
-    "monto",          # K (10)
+    "detalle de venta",          # I (8) <-- NUEVA POSICIÓN
+    "vendedor",                  # J (9) <-- NUEVA POSICIÓN
+    "monto",                     # K (10) <-- NUEVA POSICIÓN
     # Pagos adicionales (4 columnas por cada pago, hasta 5 pagos adicionales, haciendo un total de 31 columnas)
     "pago_adicional_1_factura",  # L (11)
     "pago_adicional_1_fecha",    # M (12)
@@ -272,12 +272,23 @@ def menu3():
 @app.route('/lista1')
 @login_required() # Requiere login, pero sin rol específico
 def lista1():
+    registros = [] # Asegurar que registros siempre es una lista por defecto
     try:
         spreadsheet = get_google_sheets_client().open(SPREADSHEET_NAME) # Abre la hoja de cálculo "rivadavia"
+        if spreadsheet is None: # Si open() por alguna razón devuelve None
+            raise gspread.exceptions.SpreadsheetNotFound(f"La hoja de cálculo '{SPREADSHEET_NAME}' no pudo ser abierta.")
+            
         hoja = spreadsheet.worksheet("lista1") # Selecciona la hoja "lista1"
-        # Asume que 'lista1' no tiene el problema de encabezados duplicados,
-        # si lo tuviera, también necesitaría un expected_headers aquí.
+        if hoja is None: # Si worksheet() por alguna razón devuelve None
+            raise gspread.exceptions.WorksheetNotFound(f"La hoja 'lista1' no pudo ser encontrada en '{SPREADSHEET_NAME}'.")
+
         registros = hoja.get_all_records() # Obtiene todos los registros de la hoja
+    except gspread.exceptions.SpreadsheetNotFound as e:
+        flash(f"❌ Error: La hoja de cálculo principal no se encontró o no hay permisos: {str(e)}", "danger")
+        registros = []
+    except gspread.exceptions.WorksheetNotFound as e:
+        flash(f"❌ Error: La hoja 'lista1' no se encontró o no hay permisos: {str(e)}", "danger")
+        registros = []
     except Exception as e:
         flash(f"Ocurrió un error al cargar los datos: {str(e)}", "danger") # Muestra mensaje de error
         registros = [] # Deja la lista de registros vacía en caso de error
@@ -311,7 +322,13 @@ def get_drive_file_id(url):
 def get_lista1_items():
     try:
         spreadsheet = get_google_sheets_client().open(SPREADSHEET_NAME)
+        if spreadsheet is None:
+            raise gspread.exceptions.SpreadsheetNotFound(f"La hoja de cálculo '{SPREADSHEET_NAME}' no pudo ser abierta.")
+            
         hoja = spreadsheet.worksheet("lista1")
+        if hoja is None:
+            raise gspread.exceptions.WorksheetNotFound(f"La hoja 'lista1' no pudo ser encontrada en '{SPREADSHEET_NAME}'.")
+
         # Obtener todos los valores como una lista de listas (raw data)
         data = hoja.get_all_values()
 
@@ -405,10 +422,23 @@ def presupuesto_creator():
 @app.route('/presupuesto')
 @login_required()
 def presupuesto():
+    registros = [] # Asegurar que registros siempre es una lista por defecto
     try:
         spreadsheet = get_google_sheets_client().open(SPREADSHEET_NAME) # Abre la hoja de cálculo
+        if spreadsheet is None:
+            raise gspread.exceptions.SpreadsheetNotFound(f"La hoja de cálculo '{SPREADSHEET_NAME}' no pudo ser abierta.")
+            
         hoja = spreadsheet.worksheet("presupuestos") # Selecciona la hoja "presupuestos"
+        if hoja is None:
+            raise gspread.exceptions.WorksheetNotFound(f"La hoja 'presupuestos' no pudo ser encontrada en '{SPREADSHEET_NAME}'.")
+
         registros = hoja.get_all_records() # Obtiene todos los registros
+    except gspread.exceptions.SpreadsheetNotFound as e:
+        flash(f"❌ Error: La hoja de cálculo principal no se encontró o no hay permisos: {str(e)}", "danger")
+        registros = []
+    except gspread.exceptions.WorksheetNotFound as e:
+        flash(f"❌ Error: La hoja 'presupuestos' no se encontró o no hay permisos: {str(e)}", "danger")
+        registros = []
     except Exception as e:
         flash(f"Error al cargar la hoja de presupuestos: {str(e)}", "danger")
         registros = []
@@ -419,10 +449,23 @@ def presupuesto():
 @app.route('/creditocap')
 @login_required()
 def creditocap():
+    registros = [] # Asegurar que registros siempre es una lista por defecto
     try:
         spreadsheet = get_google_sheets_client().open(SPREADSHEET_NAME)
+        if spreadsheet is None:
+            raise gspread.exceptions.SpreadsheetNotFound(f"La hoja de cálculo '{SPREADSHEET_NAME}' no pudo ser abierta.")
+            
         hoja = spreadsheet.worksheet("creditocap")  # Accede a la hoja "creditocap"
+        if hoja is None:
+            raise gspread.exceptions.WorksheetNotFound(f"La hoja 'creditocap' no pudo ser encontrada en '{SPREADSHEET_NAME}'.")
+        
         registros = hoja.get_all_records(expected_headers=CREDITOCAP_HEADERS) 
+    except gspread.exceptions.SpreadsheetNotFound as e:
+        flash(f"❌ Error: La hoja de cálculo principal no se encontró o no hay permisos: {str(e)}", "danger")
+        registros = []
+    except gspread.exceptions.WorksheetNotFound as e:
+        flash(f"❌ Error: La hoja 'creditocap' no se encontró o no hay permisos: {str(e)}", "danger")
+        registros = []
     except Exception as e:
         flash(f"❌ Error al cargar registros de Creditocap: {str(e)}", "danger")
         registros = []
@@ -443,7 +486,12 @@ def registro_credito():
         # Procesa el envío del formulario
         try:
             spreadsheet = get_google_sheets_client().open(SPREADSHEET_NAME)
+            if spreadsheet is None:
+                raise gspread.exceptions.SpreadsheetNotFound(f"La hoja de cálculo '{SPREADSHEET_NAME}' no pudo ser abierta.")
+                
             hoja = spreadsheet.worksheet("creditocap") # Hoja de créditos
+            if hoja is None:
+                raise gspread.exceptions.WorksheetNotFound(f"La hoja 'creditocap' no pudo ser encontrada en '{SPREADSHEET_NAME}'.")
 
             monto_str = request.form.get("monto")
             monto_total = None 
@@ -494,10 +542,10 @@ def registro_credito():
                 request.form.get("tipo_pago"),    # H (Index 7)
                 request.form.get("detalle"),      # I (Index 8) - Detalle de Venta (Nueva Posición)
                 session.get("user"),              # J (Index 9) - Vendedor (Nueva Posición)
-                monto_total,      # K (Index 10) - Detalle de Venta
+                monto_total,                      # K (Index 10) - Monto Total (Nueva Posición)
             ]
             
-            # Los pagos adicionales deben venir después de Detalle de Venta (desde columna L, Index 11)
+            # Los pagos adicionales deben venir después de Monto Total (desde columna L, Index 11)
             data.extend(pagos_adicionales_data)
 
             # Convertir índice a letra de columna de Excel para depuración
@@ -516,6 +564,10 @@ def registro_credito():
 
             hoja.append_row(data) # Añade una nueva fila a la hoja
             flash("✅ Venta registrada correctamente.", "success") # Mensaje de éxito
+        except gspread.exceptions.SpreadsheetNotFound as e:
+            flash(f"❌ Error: La hoja de cálculo principal no se encontró o no hay permisos: {str(e)}", "danger")
+        except gspread.exceptions.WorksheetNotFound as e:
+            flash(f"❌ Error: La hoja 'creditocap' no se encontró o no hay permisos: {str(e)}", "danger")
         except Exception as e:
             print(f"ERROR CRÍTICO al guardar registro_credito: {e}")
             traceback.print_exc() # Imprime el traceback para depuración
@@ -524,11 +576,24 @@ def registro_credito():
         return redirect(url_for("registro_credito")) # Redirige para evitar reenvío del formulario
 
     # --- Modo GET: Carga y muestra todos los registros para la tabla plana ---
+    all_registros = [] # Asegurar que all_registros siempre es una lista por defecto
     try:
         spreadsheet = get_google_sheets_client().open(SPREADSHEET_NAME)
+        if spreadsheet is None:
+            raise gspread.exceptions.SpreadsheetNotFound(f"La hoja de cálculo '{SPREADSHEET_NAME}' no pudo ser abierta.")
+            
         hoja = spreadsheet.worksheet("creditocap")
+        if hoja is None:
+            raise gspread.exceptions.WorksheetNotFound(f"La hoja 'creditocap' no pudo ser encontrada en '{SPREADSHEET_NAME}'.")
+
         # ¡IMPORTANTE! Usar expected_headers aquí
         all_registros = hoja.get_all_records(expected_headers=CREDITOCAP_HEADERS) # Obtiene todos los registros sin agrupar
+    except gspread.exceptions.SpreadsheetNotFound as e:
+        flash(f"❌ Error: La hoja de cálculo principal no se encontró o no hay permisos: {str(e)}", "danger")
+        all_registros = []
+    except gspread.exceptions.WorksheetNotFound as e:
+        flash(f"❌ Error: La hoja 'creditocap' no se encontró o no hay permisos: {str(e)}", "danger")
+        all_registros = []
     except Exception as e:
         flash(f"❌ Error al cargar registros: {str(e)}", "danger")
         all_registros = [] # Inicializa como lista vacía en caso de error
@@ -548,7 +613,13 @@ def registro_credito():
 def exportar_creditos_pdf():
     try:
         spreadsheet = get_google_sheets_client().open(SPREADSHEET_NAME)
+        if spreadsheet is None:
+            raise gspread.exceptions.SpreadsheetNotFound(f"La hoja de cálculo '{SPREADSHEET_NAME}' no pudo ser abierta.")
+            
         hoja = spreadsheet.worksheet("creditocap")
+        if hoja is None:
+            raise gspread.exceptions.WorksheetNotFound(f"La hoja 'creditocap' no pudo ser encontrada en '{SPREADSHEET_NAME}'.")
+            
         # ¡IMPORTANTE! Usar expected_headers aquí
         registros = hoja.get_all_records(expected_headers=CREDITOCAP_HEADERS) # Obtiene todos los registros para el PDF
 
@@ -617,111 +688,63 @@ def exportar_creditos_pdf():
 @app.route('/pagarecap', methods=['GET', 'POST'])
 @login_required()
 def pagarecap():
-    hoja = None
+    print("DEBUG: Accediendo a la ruta /pagarecap") # Log para verificar si la ruta es alcanzada
+    pagares_registros = [] # Asegurar que pagares_registros siempre es una lista por defecto
+    all_records_raw = [] # Asegurar que all_records_raw siempre es una lista por defecto
+
     try:
         spreadsheet = get_google_sheets_client().open(SPREADSHEET_NAME)
+        if spreadsheet is None:
+            raise gspread.exceptions.SpreadsheetNotFound(f"La hoja de cálculo '{SPREADSHEET_NAME}' no pudo ser abierta.")
+            
         hoja = spreadsheet.worksheet("creditocap")
+        if hoja is None:
+            raise gspread.exceptions.WorksheetNotFound(f"La hoja 'creditocap' no pudo ser encontrada en '{SPREADSHEET_NAME}'.")
+
         # ¡IMPORTANTE! Usar expected_headers aquí para que `all_records_raw` use el nuevo orden
         # Esta línea se mueve para que esté disponible tanto para POST como para GET
         all_records_raw = hoja.get_all_records(expected_headers=CREDITOCAP_HEADERS) 
 
+        # La lógica POST para registrar pagos adicionales se ha movido a la ruta /ver_estado_credito_por_dni/<string:dni_cliente>
+        # Sin embargo, si un formulario POST llega aquí por error, podríamos querer procesarlo o redirigirlo.
+        # Por simplicidad, este POST aquí simplemente redirigirá, ya que la acción principal está en la vista de detalle.
         if request.method == 'POST':
-            # Manejar el envío del formulario de pago adicional
             dni_cliente = request.form.get('dni_cliente_hidden', '').strip()
-            new_factura = request.form.get('new_factura', '').strip()
-            new_fecha = request.form.get('new_fecha', '').strip()
-            new_tipo = request.form.get('new_tipo', '').strip()
-            new_monto_str = request.form.get('new_monto', '').strip() # Captura el monto adicional
-            slot_to_update_str = request.form.get('next_slot_to_fill', '')
+            flash("⚠️ La acción de pago debe realizarse desde la vista detallada del crédito. Redirigiendo...", "info")
+            if dni_cliente:
+                return redirect(url_for('ver_estado_credito_por_dni', dni_cliente=dni_cliente))
+            else:
+                return redirect(url_for('pagarecap')) # Si no hay DNI, vuelve a la lista
 
-            print(f"DEBUG POST /pagarecap: DNI={dni_cliente}, Slot={slot_to_update_str}, Factura={new_factura}, Fecha={new_fecha}, Tipo={new_tipo}, Monto={new_monto_str}")
-
-            if not all([dni_cliente, slot_to_update_str, new_factura, new_fecha, new_tipo, new_monto_str]):
-                flash("❌ Error: Faltan datos para registrar el pago adicional.", "danger")
-                return redirect(url_for('pagarecap', dni=dni_cliente))
-
-            try:
-                slot_to_update = int(slot_to_update_str)
-                new_monto = float(new_monto_str) # Convertir a float
-            except ValueError:
-                flash("❌ Error: El número de pago o el monto no son válidos.", "danger")
-                return redirect(url_for('pagarecap', dni=dni_cliente))
-
-            # Buscar la fila por DNI en los registros ya obtenidos con los headers correctos
-            credit_data = None
-            row_index = -1
-
-            # `all_records_raw` ya tiene los datos con los nombres de columna correctos gracias a `expected_headers`
-            for i, record in enumerate(all_records_raw):
-                dni_in_sheet = str(record.get('dni', '')).strip()
-                if dni_in_sheet == dni_cliente:
-                    credit_data = record
-                    row_index = i + 2 # +2 para la notación A1 de gspread (1 para encabezado, 1 para 0-index a 1-index)
-                    break
-            
-            if not credit_data:
-                flash(f"❌ Error: No se encontró el crédito para el DNI: {dni_cliente}.", "danger")
-                return redirect(url_for('pagarecap', dni=dni_cliente))
-            
-            tipo_pago_original = str(credit_data.get('tipo de pago', '')).strip().lower()
-            
-            # Definir cuántos pagos *extras* se esperan para cada tipo de pagaré
-            num_extra_payments_expected_for_credit = 0
-            if 'pagaré' in tipo_pago_original:
-                if tipo_pago_original == 'pagaré 3':
-                    num_extra_payments_expected_for_credit = 2
-                elif tipo_pago_original == 'pagaré 6':
-                    num_extra_payments_expected_for_credit = 5
-            elif tipo_pago_original in ['contado', 'tarjeta', 'otros']:
-                 flash(f"❌ Error: El crédito con DNI {dni_cliente} no es un pagaré y no permite pagos adicionales.", "danger")
-                 return redirect(url_for('pagarecap', dni=dni_cliente))
-
-            # CORREGIDO a 5: Máximo de slots que tu hoja soporta
-            max_additional_slots_in_sheet = 5 
-            if slot_to_update < 1 or slot_to_update > num_extra_payments_expected_for_credit or slot_to_update > max_additional_slots_in_sheet:
-                flash(f"❌ Error: El número de pago {slot_to_update} excede el límite permitido de pagos adicionales para este tipo de pagaré ({num_extra_payments_expected_for_credit}) o la estructura de la hoja ({max_additional_slots_in_sheet}).", "danger")
-                return redirect(url_for('pagarecap', dni=dni_cliente))
-
-            # Determinar las columnas exactas para actualizar usando CREDITOCAP_HEADERS
-            # Esto es más robusto ante cambios de orden en los encabezados
-            try:
-                base_col_index = CREDITOCAP_HEADERS.index(f'pago_adicional_{slot_to_update}_factura') + 1 
-            except ValueError:
-                flash(f"❌ Error interno: No se encontró el encabezado para el pago adicional {slot_to_update}. Contacte a soporte.", "danger")
-                return redirect(url_for('pagarecap', dni=dni_cliente))
-
-
-            hoja.update_cell(row_index, base_col_index, new_factura)
-            hoja.update_cell(row_index, base_col_index + 1, new_fecha)
-            hoja.update_cell(row_index, base_col_index + 2, new_tipo)
-            hoja.update_cell(row_index, base_col_index + 3, new_monto) # Actualiza la columna de monto
-            
-            flash("✅ Pago adicional registrado correctamente.", "success")
-            return redirect(url_for('pagarecap', dni=dni_cliente))
-            
-    except ValueError as ve:
-        flash(f"❌ Error de configuración en la hoja o datos: {str(ve)}. Asegúrese de que las columnas de pagos adicionales existen y son correctas.", "danger")
-        print(f"ValueError en pagarecap POST: {ve}")
-        traceback.print_exc() # Imprime el traceback
-    except Exception as e:
-        flash(f"❌ Error inesperado al procesar el pago: {str(e)}", "danger")
-        print(f"ERROR en pagarecap POST: {e}")
-        traceback.print_exc() # Imprime el traceback
-    
-    # Lógica para GET (mostrar la tabla)
-    try:
-        # all_records_raw ya fue obtenido con expected_headers al inicio de la función
+    except gspread.exceptions.SpreadsheetNotFound as e:
+        flash(f"❌ Error: La hoja de cálculo principal no se encontró o no hay permisos: {str(e)}", "danger")
         pagares_registros = []
-        # CORREGIDO a 5: El máximo de slots que tu HTML y hoja soportan físicamente
-        max_additional_slots_in_sheet = 5
+        all_records_raw = []
+    except gspread.exceptions.WorksheetNotFound as e:
+        flash(f"❌ Error: La hoja 'creditocap' no se encontró o no hay permisos: {str(e)}", "danger")
+        pagares_registros = []
+        all_records_raw = []
+    except Exception as e:
+        flash(f"❌ Error inesperado al procesar la solicitud: {str(e)}", "danger")
+        print(f"ERROR en pagarecap (general): {e}")
+        traceback.print_exc() # Imprime el traceback
+        pagares_registros = []
+        all_records_raw = []
+    
+    # Lógica para GET (mostrar la tabla de pagarés)
+    # Filtrar solo los registros que son de tipo 'pagaré'
+    try:
+        pagares_registros = [] 
+        max_additional_slots_in_sheet = 5 # El máximo de slots que tu hoja soporta físicamente
 
         for reg in all_records_raw: # Usamos los registros ya procesados
             tipo_pago = str(reg.get('tipo de pago', '')).strip().lower()
             
+            print(f"DEBUG GET /pagarecap: Procesando registro DNI '{reg.get('dni', 'N/A')}', Tipo de Pago: '{tipo_pago}'")
+
             if 'pagaré' in tipo_pago:
                 current_reg = reg.copy() # Trabajar en una copia para añadir nuevas claves
 
-                # Número TOTAL de pagos esperados (inicial + extras)
                 num_total_payments_expected = 0
                 if tipo_pago == 'pagaré 3':
                     num_total_payments_expected = 3
@@ -747,27 +770,157 @@ def pagarecap():
                         except ValueError:
                             pass # No cuenta el pago si el monto no es válido
                         
-                all_payments_complete = (registered_payments_count >= num_extra_payments_expected)
+                all_payments_complete = False
                 
                 # Si el número de pagos extras esperados excede los slots físicos, no puede estar completo.
                 if num_extra_payments_expected > max_additional_slots_in_sheet:
                     all_payments_complete = False 
+                elif registered_payments_count >= num_extra_payments_expected: # Solo si no excede, verifica si está completo
+                    all_payments_complete = True
 
                 current_reg['all_payments_complete'] = all_payments_complete
                 pagares_registros.append(current_reg)
-
+            else:
+                print(f"DEBUG GET /pagarecap: Registro excluido (Tipo de Pago no es Pagaré): '{tipo_pago}' para DNI: {reg.get('dni', 'N/A')}")
     except Exception as e:
-        flash(f"❌ Error al cargar los registros de pagarés: {str(e)}", "danger")
+        flash(f"❌ Error al cargar los registros de pagarés para mostrar: {str(e)}", "danger")
         print(f"ERROR al cargar registros en pagarecap GET: {e}")
-        traceback.print_exc() # Imprime el traceback
+        traceback.print_exc()
         pagares_registros = []
 
-    # Renderiza la plantilla 'creditocap.html' pasando los registros filtrados, headers y flag (para vista de pagarés)
+    # Renderiza la NUEVA plantilla 'pagare_list.html' para la vista de lista de pagarés
     return render_template(
-        'creditocap.html',
-        all_registros=pagares_registros,
-        creditocap_headers=CREDITOCAP_HEADERS, # Pasa los encabezados a la plantilla
-        is_pagare_view=True # Flag para indicar que es la vista de pagarés
+        'pagare_list.html', # <--- CAMBIO IMPORTANTE AQUÍ
+        pagares_registros=pagares_registros, # Pasa los registros filtrados
+        creditocap_headers=CREDITOCAP_HEADERS # Pasa los encabezados si es necesario para el listado
+    )
+
+
+# --- NUEVA RUTA: ver_estado_credito_por_dni (vista detallada de un solo crédito) ---
+@app.route('/ver_estado_credito_por_dni/<string:dni_cliente>', methods=['GET', 'POST'])
+@login_required()
+def ver_estado_credito_por_dni(dni_cliente):
+    if request.method == 'POST':
+        # Manejar el envío del formulario de pago adicional desde esta vista
+        try:
+            spreadsheet = get_google_sheets_client().open(SPREADSHEET_NAME)
+            if spreadsheet is None:
+                raise gspread.exceptions.SpreadsheetNotFound(f"La hoja de cálculo '{SPREADSHEET_NAME}' no pudo ser abierta.")
+                
+            hoja = spreadsheet.worksheet("creditocap")
+            if hoja is None:
+                raise gspread.exceptions.WorksheetNotFound(f"La hoja 'creditocap' no pudo ser encontrada en '{SPREADSHEET_NAME}'.")
+
+            new_factura = request.form.get('new_factura', '').strip()
+            new_fecha = request.form.get('new_fecha', '').strip()
+            new_tipo = request.form.get('new_tipo', '').strip()
+            new_monto_str = request.form.get('new_monto', '').strip()
+            slot_to_update_str = request.form.get('next_slot_to_fill', '')
+
+            print(f"DEBUG POST /ver_estado_credito_por_dni: DNI={dni_cliente}, Slot={slot_to_update_str}, Factura={new_factura}, Fecha={new_fecha}, Tipo={new_tipo}, Monto={new_monto_str}")
+
+            if not all([dni_cliente, slot_to_update_str, new_factura, new_fecha, new_tipo, new_monto_str]):
+                flash("❌ Error: Faltan datos para registrar el pago adicional.", "danger")
+                return redirect(url_for('ver_estado_credito_por_dni', dni_cliente=dni_cliente))
+
+            try:
+                slot_to_update = int(slot_to_update_str)
+                new_monto = float(new_monto_str)
+            except ValueError:
+                flash("❌ Error: El número de pago o el monto no son válidos.", "danger")
+                return redirect(url_for('ver_estado_credito_por_dni', dni_cliente=dni_cliente))
+
+            all_records_raw = hoja.get_all_records(expected_headers=CREDITOCAP_HEADERS) 
+            credit_data = None
+            row_index = -1
+
+            for i, record in enumerate(all_records_raw):
+                dni_in_sheet = str(record.get('dni', '')).strip()
+                if dni_in_sheet == dni_cliente:
+                    credit_data = record
+                    row_index = i + 2
+                    break
+            
+            if not credit_data:
+                flash(f"❌ Error: No se encontró el crédito para el DNI: {dni_cliente}.", "danger")
+                return redirect(url_for('pagarecap')) # Si no se encuentra, volver a la lista general
+
+            tipo_pago_original = str(credit_data.get('tipo de pago', '')).strip().lower()
+            
+            num_extra_payments_expected_for_credit = 0
+            if 'pagaré' in tipo_pago_original:
+                if tipo_pago_original == 'pagaré 3':
+                    num_extra_payments_expected_for_credit = 2
+                elif tipo_pago_original == 'pagaré 6':
+                    num_extra_payments_expected_for_credit = 5
+            elif tipo_pago_original in ['contado', 'tarjeta', 'otros']:
+                 flash(f"❌ Error: El crédito con DNI {dni_cliente} no es un pagaré y no permite pagos adicionales.", "danger")
+                 return redirect(url_for('ver_estado_credito_por_dni', dni_cliente=dni_cliente))
+
+            max_additional_slots_in_sheet = 5 
+            if slot_to_update < 1 or slot_to_update > num_extra_payments_expected_for_credit or slot_to_update > max_additional_slots_in_sheet:
+                flash(f"❌ Error: El número de pago {slot_to_update} excede el límite permitido de pagos adicionales para este tipo de pagaré ({num_extra_payments_expected_for_credit}) o la estructura de la hoja ({max_additional_slots_in_sheet}).", "danger")
+                return redirect(url_for('ver_estado_credito_por_dni', dni_cliente=dni_cliente))
+
+            try:
+                base_col_index = CREDITOCAP_HEADERS.index(f'pago_adicional_{slot_to_update}_factura') + 1 
+            except ValueError:
+                flash(f"❌ Error interno: No se encontró el encabezado para el pago adicional {slot_to_update}. Contacte a soporte.", "danger")
+                return redirect(url_for('ver_estado_credito_por_dni', dni_cliente=dni_cliente))
+
+            hoja.update_cell(row_index, base_col_index, new_factura)
+            hoja.update_cell(row_index, base_col_index + 1, new_fecha)
+            hoja.update_cell(row_index, base_col_index + 2, new_tipo)
+            hoja.update_cell(row_index, base_col_index + 3, new_monto)
+            
+            flash("✅ Pago adicional registrado correctamente.", "success")
+            return redirect(url_for('ver_estado_credito_por_dni', dni_cliente=dni_cliente))
+
+        except Exception as e:
+            flash(f"❌ Error al procesar el pago: {str(e)}", "danger")
+            print(f"ERROR en ver_estado_credito_por_dni POST: {e}")
+            traceback.print_exc()
+            return redirect(url_for('ver_estado_credito_por_dni', dni_cliente=dni_cliente))
+    
+    # Lógica para GET: Obtener y mostrar los detalles del crédito
+    credit_data = None
+    payments_data = []
+    next_payment_slot = None
+    expected_payment_dates = []
+    max_additional_payments_in_structure = 5 # Asumiendo 5 slots para pagos adicionales
+
+    try:
+        # Reutilizamos la lógica de la API para obtener los detalles, incluyendo pagos
+        # Esto es más eficiente que duplicar la lógica de acceso a la hoja aquí.
+        api_response = get_credit_details_json(dni_cliente)
+        
+        if api_response.status_code == 200:
+            data = json.loads(api_response.data) # Convertir Bytes a string y luego a JSON
+            credit_data = data.get('credit_data')
+            payments_data = data.get('payments_data', [])
+            next_payment_slot = data.get('next_payment_slot')
+            max_additional_payments_in_structure = data.get('max_additional_payments')
+            expected_payment_dates = data.get('expected_payment_dates', [])
+        else:
+            # Si la API devuelve un error, flashear el mensaje y redirigir
+            error_data = json.loads(api_response.data)
+            flash(f"❌ Error: {error_data.get('error', 'Error desconocido al cargar el crédito.')}", "danger")
+            return redirect(url_for('pagarecap')) # Redirige a la lista de pagarés
+
+    except Exception as e:
+        flash(f"❌ Error inesperado al cargar detalles del crédito: {str(e)}", "danger")
+        print(f"ERROR en ver_estado_credito_por_dni GET: {e}")
+        traceback.print_exc()
+        return redirect(url_for('pagarecap'))
+
+
+    return render_template(
+        'ver_estado_credito.html',
+        credit_data=credit_data,
+        payments_data=payments_data,
+        next_payment_slot=next_payment_slot,
+        max_additional_payments=max_additional_payments_in_structure,
+        expected_payment_dates=expected_payment_dates
     )
 
 
@@ -777,7 +930,13 @@ def pagarecap():
 def get_credit_details_json(dni_cliente):
     try:
         spreadsheet = get_google_sheets_client().open(SPREADSHEET_NAME)
+        if spreadsheet is None:
+            raise gspread.exceptions.SpreadsheetNotFound(f"La hoja de cálculo '{SPREADSHEET_NAME}' no pudo ser abierta.")
+            
         hoja = spreadsheet.worksheet("creditocap")
+        if hoja is None:
+            raise gspread.exceptions.WorksheetNotFound(f"La hoja 'creditocap' no pudo ser encontrada en '{SPREADSHEET_NAME}'.")
+            
         # ¡IMPORTANTE! Usar expected_headers aquí para que `all_records` use el nuevo orden
         all_records = hoja.get_all_records(expected_headers=CREDITOCAP_HEADERS)
         
@@ -913,6 +1072,12 @@ def get_credit_details_json(dni_cliente):
             "expected_payment_dates": expected_payment_dates
         })
 
+    except gspread.exceptions.SpreadsheetNotFound as e:
+        print(f"ERROR CRÍTICO en get_credit_details_json: La hoja de cálculo principal no se encontró o no hay permisos: {str(e)}")
+        return jsonify({"error": f"Error interno del servidor: La hoja de cálculo principal no se encontró o no hay permisos."}), 500
+    except gspread.exceptions.WorksheetNotFound as e:
+        print(f"ERROR CRÍTICO en get_credit_details_json: La hoja 'creditocap' no se encontró o no hay permisos: {str(e)}")
+        return jsonify({"error": f"Error interno del servidor: La hoja 'creditocap' no se encontró o no hay permisos."}), 500
     except Exception as e:
         print(f"ERROR CRÍTICO en get_credit_details_json: {e}")
         traceback.print_exc()
