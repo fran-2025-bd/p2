@@ -25,17 +25,61 @@ SCOPES = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/a
 SPREADSHEET_NAME = "rivadavia"
 
 # Configuración de usuarios (en producción usar base de datos)
+# --- USUARIOS Y ROLES ---
+# IMPORTANTE: ESTE DICCIONARIO CON CONTRASEÑAS HARDCODEADAS ES UNA VULNERABILIDAD DE SEGURIDAD.
+# PARA PRODUCCIÓN, DEBERÍAS HASHEAR LAS CONTRASEÑAS Y ALMACENAR LOS USUARIOS EN UNA BASE DE DATOS.
+# TODAS LAS CONTRASEÑAS DEBEN SER HASHEADAS CON generate_password_hash().
 USERS = {
     "admin": {
         "password": generate_password_hash(os.getenv('ADMIN_PASSWORD', 'admin123')),
         "role": "admin"
     },
     "cristian": {
-        "password": generate_password_hash(os.getenv('CRISTIAN_PASSWORD', 'rivadavia620')),
+        "password": generate_password_hash(os.getenv('CRISTIAN_PASSWORD', 'rivadavia620')), # Contraseña hasheada
         "role": "supervisor"
     },
-    # ... otros usuarios
+    "delfi": {
+        "password": generate_password_hash(os.getenv('DELFI_PASSWORD', 'rivadavia620')), # Contraseña hasheada
+        "role": "supervisor"
+    },
+    "trento": {
+        "password": generate_password_hash(os.getenv('TRENTO_PASSWORD', 'trento')), # Contraseña hasheada
+        "role": "supervisor"
+    },
+    "tete": {
+        "password": generate_password_hash(os.getenv('TETE_PASSWORD', 'tete123')), # Contraseña hasheada
+        "role": "interior"
+    },
+    "int2": {
+        "password": generate_password_hash(os.getenv('INT2_PASSWORD', 'int456')), # Contraseña hasheada
+        "role": "interior"
+    },
+    "int3": {
+        "password": generate_password_hash(os.getenv('INT3_PASSWORD', 'int789')), # Contraseña hasheada
+        "role": "interior"
+    }
 }
+
+# --- Decorador para rutas que requieren autenticación ---
+def login_required(role=None):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not session.get('logged_in'):
+                flash("Por favor, inicia sesión para acceder a esta página.", "info")
+                return redirect(url_for('login'))
+            if role and session.get('role') != role:
+                flash("No tienes permisos para acceder a esta página.", "danger")
+                # Redirige al menú del rol actual si no tiene permiso para el solicitado
+                current_role_menu = {
+                    "admin": "menu1",
+                    "supervisor": "menu2",
+                    "interior": "menu3"
+                }.get(session.get('role'), 'login')
+                return redirect(url_for(current_role_menu))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 # Helpers
 def get_google_sheets_client():
