@@ -8,8 +8,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'clave_secreta_predeterminada')
-
+app.secret_key = os.getenv('FLASK_SECRET_KEY')
 SCOPES = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 
 # --- Usuarios y roles ---
