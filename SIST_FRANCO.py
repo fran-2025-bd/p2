@@ -8,7 +8,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default-secret-key-for-dev')  # Valor por defecto para desarrollo
+app.secret_key = os.getenv('FLASK_SECRET_KEY')  # Valor por defecto para desarrollo
 app.config['SESSION_COOKIE_SECURE'] = True  # Solo enviar cookies sobre HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hora de sesión
