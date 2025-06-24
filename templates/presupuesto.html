@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>💬 Presupuesto</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 2rem;
+            background-color: #f7f9fc;
+            color: #333;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+        }
+
+        .volver {
+            background: #3498db;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 1rem 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+        }
+
+        th, td {
+            padding: 0.6rem;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #eaeaea;
+        }
+
+        tfoot td {
+            font-weight: bold;
+            background-color: #fafafa;
+        }
+
+        button {
+            padding: 0.4rem 0.8rem;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .eliminar {
+            background-color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🧾 Crear Presupuesto</h1>
+        <a href="{{ url_for('menu2') }}" class="volver">Volver al menú</a>
+    </header>
+
+    <input type="text" id="buscar" placeholder="Buscar producto..." list="productos">
+    <datalist id="productos">
+        {% for row in registros %}
+            <option value="{{ row['Nombre Producto'] }}">
+        {% endfor %}
+    </datalist>
+
+    <button onclick="agregarProducto()">➕ Agregar</button>
+
+    <table id="tabla">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Contado</th>
+                <th>Final</th>
+                <th>3 Cuotas</th>
+                <th>6 Cuotas</th>
+                <th>9 Cuotas</th>
+                <th>12 Cuotas</th>
+                <th>2 Cuotas</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+            <tr>
+                <td colspan="2">Subtotal</td>
+                <td id="sub_contado">$0</td>
+                <td id="sub_final">$0</td>
+                <td id="sub_3c">$0</td>
+                <td id="sub_6c">$0</td>
+                <td id="sub_9c">$0</td>
+                <td id="sub_12c">$0</td>
+                <td id="sub_2c">$0</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <script>
+        const productos = {{ registros | tojson }};
+        const tabla = document.querySelector("#tabla tbody");
+
+        function parsePrecio(precio) {
+            if (typeof precio === 'string') {
+                return parseFloat(precio.replace(/\$/g, '').replace(/\./g, '').replace(',', '.')) || 0;
+            }
+            return precio || 0;
+        }
+
+        function formatear(monto) {
+            return "$" + monto.toLocaleString('es-AR');
+        }
+
+        function agregarProducto() {
+            const nombreProducto = document.getElementById("buscar").value.trim();
+            const producto = productos.find(p => p["Nombre Producto"] === nombreProducto);
+            if (!producto) return;
+
+            const fila = tabla.insertRow();
+            fila.innerHTML = `
+                <td>${producto["Código"]}</td>
+                <td>${producto["Nombre Producto"]}</td>
+                <td class="contado">${producto["Precio Contado"]}</td>
+                <td class="final">${producto["Precio Final"]}</td>
+                <td class="3c">${producto["3 Cuotas"]}</td>
+                <td class="6c">${producto["6 Cuotas"]}</td>
+                <td class="9c">${producto["9 Cuotas"]}</td>
+                <td class="12c">${producto["12 Cuotas"]}</td>
+                <td class="2c">${producto["2 Cuotas"]}</td>
+                <td><button class="eliminar" onclick="eliminarProducto(this)">🗑</button></td>
+            `;
+
+            document.getElementById("buscar").value = "";
+            actualizarTotales();
+        }
+
+        function eliminarProducto(boton) {
+            boton.closest("tr").remove();
+            actualizarTotales();
+        }
+
+        function actualizarTotales() {
+            const clases = {
+                "sub_contado": "contado",
+                "sub_final": "final",
+                "sub_3c": "3c",
+                "sub_6c": "6c",
+                "sub_9c": "9c",
+                "sub_12c": "12c",
+                "sub_2c": "2c"
+            };
+
+            for (const id in clases) {
+                const celdas = document.querySelectorAll(`.${clases[id]}`);
+                const total = Array.from(celdas).reduce((suma, celda) => {
+                    return suma + parsePrecio(celda.textContent);
+                }, 0);
+                document.getElementById(id).textContent = formatear(total);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro y Resumen de Créditos - Tu Empresa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #28a745; /* Verde Bootstrap Success */
+            --primary-hover-color: #218838;
+            --secondary-color: #6c757d; /* Gris Bootstrap Secondary */
+            --background-light: #f8f9fa;
+            --background-medium: #eef2f7;
+            --card-background: #ffffff;
+            --text-dark: #1d3557;
+            --text-muted: #667e91;
+            --border-color: #e0e6ed;
+            --shadow-light: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-hover: 0 6px 16px rgba(0,0,0,0.12);
+        }
+
+        body {
+            background-color: var(--background-medium);
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        h2, h5 {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+        }
+
+        .container-fluid {
+            padding: 2.5rem;
+            position: relative; /* Para posicionar el botón de volver */
+        }
+
+        /* Resumen Section */
+        .resumen-section {
+            max-height: 85vh;
+            overflow-y: auto;
+            padding-right: 1.2rem;
+            font-size: 0.9rem;
+            border-radius: 10px;
+            background-color: var(--card-background);
+            box-shadow: var(--shadow-light);
+            padding: 25px;
+        }
+
+        /* Custom Scrollbar */
+        .resumen-section::-webkit-scrollbar {
+            width: 8px;
+            background-color: transparent;
+        }
+        .resumen-section::-webkit-scrollbar-thumb {
+            background-color: var(--secondary-color);
+            border-radius: 10px;
+            border: 2px solid var(--background-medium);
+        }
+        .resumen-section::-webkit-scrollbar-thumb:hover {
+            background-color: var(--primary-color);
+        }
+
+        /* Formulario Section */
+        .formulario-section {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .form-control, .form-select {
+            border-color: var(--border-color);
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            padding: 0.6rem 0.75rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+        }
+
+        .btn-success {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            padding: 0.6rem 1.25rem;
+            font-weight: 600;
+        }
+
+        .btn-success:hover {
+            background-color: var(--primary-hover-color);
+            border-color: var(--primary-hover-color);
+            transform: translateY(-1px);
+        }
+
+        .btn-info { /* Nuevo estilo para el botón de exportar */
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            padding: 0.6rem 1.25rem;
+            font-weight: 600;
+        }
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #138496;
+            transform: translateY(-1px);
+        }
+
+        /* Estilo para el nuevo botón de Volver */
+        .btn-volver-menu {
+            position: absolute;
+            top: 25px; /* Ajusta la distancia desde la parte superior */
+            right: 25px; /* Ajusta la distancia desde la derecha */
+            z-index: 1000; /* Asegura que esté por encima de otros elementos */
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        .btn-volver-menu:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+            transform: translateY(-1px);
+        }
+
+
+        label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.3rem;
+            display: block;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background-color: var(--background-light);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+
+        .filter-bar .form-control { /* Solo el input de búsqueda */
+            flex-grow: 1;
+            min-width: 180px;
+        }
+
+        /* Table Styling */
+        .tabla-resumen {
+            background-color: var(--card-background);
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .table-sm th, .table-sm td {
+            padding: 0.5rem;
+        }
+
+        .tabla-resumen td {
+            font-size: 0.78rem; /* Tamaño de fuente más pequeño */
+            vertical-align: middle;
+            color: #555;
+        }
+
+        .tabla-resumen th {
+            color: var(--text-dark);
+            font-weight: 600;
+            white-space: nowrap;
+            font-size: 0.8rem; /* También un poco más pequeño para los encabezados */
+        }
+
+        .tabla-resumen thead {
+            background-color: var(--background-light);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tabla-resumen tbody tr:hover {
+            background-color: #e6f7ff;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        /* Flash Messages */
+        .alert {
+            margin-top: 1rem;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-color: #bee5eb;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    {# Botón Volver al Menú #}
+    <a href="{{ url_for('menu2') }}" class="btn btn-secondary btn-volver-menu">
+        <i class="fas fa-arrow-left me-2"></i>Volver al Menú
+    </a>
+
+    <h2 class="text-center mb-5">
+        <i class="fas fa-file-invoice-dollar me-3"></i>Registro y Resumen de Créditos
+    </h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-md-4 formulario-section mb-4 mb-md-0">
+            <h5 class="mb-4 text-center">
+                <i class="fas fa-plus-circle me-2"></i>Agregar nuevo registro
+            </h5>
+            <form method="POST" action="{{ url_for('registro_credito') }}">
+                <div class="mb-3">
+                    <label for="factura">Número de Factura</label>
+                    <input type="text" name="factura" id="factura" class="form-control" placeholder="Ej: F01-00123 / remito n° 001" required aria-label="Número de Factura">
+                </div>
+                <div class="mb-3">
+                    <label for="fecha">Fecha de Venta</label>
+                    <input type="date" name="fecha" id="fecha" class="form-control" required aria-label="Fecha de Venta">
+                </div>
+                <div class="mb-3">
+                    <label for="nombre">Nombre completo del Cliente</label>
+                    <input type="text" name="nombre" id="nombre" class="form-control" placeholder="Ej: Juan Pérez" required aria-label="Nombre completo del Cliente">
+                </div>
+                <div class="mb-3">
+                    <label for="dni">DNI</label>
+                    <input type="text" name="dni" id="dni" class="form-control" placeholder="Ej: 12345678" aria-label="DNI">
+                </div>
+                <div class="mb-3">
+                    <label for="tel">Teléfono</label>
+                    <input type="text" name="tel" id="tel" class="form-control" placeholder="Ej: +549 3804801329" aria-label="Teléfono">
+                </div>
+                <div class="mb-3">
+                    <label for="domicilio">Domicilio</label>
+                    <input type="text" name="domicilio" id="domicilio" class="form-control" placeholder="Ej: Av. Rivadavia 620, Centro" aria-label="Domicilio">
+                </div>
+                <div class="mb-3">
+                    <label for="articulo">Artículo Vendido</label>
+                    <input type="text" name="articulo" id="articulo" class="form-control" placeholder="Ej: Relax 140, base 100, mesa tv 130 pietra gris" required aria-label="Artículo Vendido">
+                </div>
+                <div class="mb-3">
+                    <label for="tipo_pago">Tipo de Pago</label>
+                    <select name="tipo_pago" id="tipo_pago" class="form-select" aria-label="Tipo de Pago">
+                        <option value="contado">Contado</option>
+                        <option value="pagaré 3">Pagaré 3 Cuotas</option>
+                        <option value="pagaré 6">Pagaré 6 Cuotas</option>
+                        <option value="tarjeta">Tarjeta de Crédito/Débito</option>
+                        <option value="otros">Otros</option>
+                    </select>
+                </div>
+                <div class="mb-3"> {# Cambiado a mb-3 para más consistencia con el nuevo campo #}
+                    <label for="detalle">Detalle de Venta</label>
+                    <textarea name="detalle" id="detalle" class="form-control" rows="3" placeholder="Información adicional sobre la venta o el crédito..." aria-label="Detalle de Venta"></textarea>
+                </div>
+                {# --- NUEVO CAMPO: MONTO --- #}
+                <div class="mb-4"> {# mb-4 para dar un poco más de espacio antes del botón #}
+                    <label for="monto">Monto</label>
+                    <input type="number" name="monto" id="monto" class="form-control" step="0.01" placeholder="Ej: 1500.00" required aria-label="Monto de la Venta">
+                </div>
+                {# --- FIN NUEVO CAMPO --- #}
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="fas fa-save me-2"></i>Guardar Registro
+                </button>
+            </form>
+        </div>
+
+        <div class="col-md-8 resumen-section">
+            <h5 class="mb-4 text-center">
+                <i class="fas fa-chart-bar me-2"></i>Resumen de Créditos
+            </h5>
+
+            <div class="filter-bar justify-content-end">
+                <div class="input-group me-3">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="searchBar" placeholder="Buscar por nombre o artículo..." oninput="buscarTexto(this.value)" aria-label="Buscar">
+                </div>
+                <a href="{{ url_for('exportar_creditos_pdf') }}" class="btn btn-info text-nowrap">
+                    <i class="fas fa-file-pdf me-2"></i>Exportar a PDF
+                </a>
+            </div>
+
+            <div class="tabla-resumen">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover table-bordered mb-0" id="registrosTable">
+            <thead>
+                <tr>
+                    <th>Fecha de venta</th>
+                    <th>Nombre completo</th>
+                    <th>Artículo vendido</th>
+                    <th>Tipo de pago</th>
+                    <th>Detalle de venta</th>
+                    <th>Vendedor</th> {# <-- Ahora Vendedor va aquí #}
+                    <th>Monto</th>    {# <-- Y Monto va después #}
+                </tr>
+            </thead>
+            <tbody>
+                {% for reg in all_registros %}
+                    <tr>
+                        <td>{{ reg['fecha de venta'] }}</td>
+                        <td>{{ reg['nombre completo'] }}</td>
+                        <td>{{ reg['articulo vendido'] }}</td>
+                        <td>{{ reg['tipo de pago'] }}</td>
+                        <td>{{ reg['detalle de venta'] }}</td>
+                        <td>{{ reg['vendedor'] }}</td>      {# <-- Mostrar el campo Vendedor #}
+                        <td>{{ reg['monto'] | default('N/A') }}</td> {# <-- Mostrar el campo Monto #}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+            {% if not all_registros %} {# Usamos 'all_registros' para la condición #}
+                <div class="alert alert-info text-center mt-4" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>Aún no hay registros de créditos para mostrar.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Establecer la fecha actual por defecto en el campo de fecha
+        const fechaInput = document.getElementById('fecha');
+        if (fechaInput) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0'); // Enero es 0
+            const dd = String(today.getDate()).padStart(2, '0');
+            fechaInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+
+        // Función para buscar texto en la tabla (ahora una sola tabla)
+        window.buscarTexto = function(valor) {
+            const tabla = document.getElementById("registrosTable");
+            if (!tabla) return; // Salir si la tabla no existe
+
+            const filas = tabla.querySelectorAll("tbody tr");
+            valor = valor.toLowerCase().trim();
+
+            filas.forEach(fila => {
+                const textoFila = fila.textContent.toLowerCase();
+                fila.style.display = textoFila.includes(valor) ? "" : "none";
+            });
+        };
+    });
+</script>
+</body>
+</html>

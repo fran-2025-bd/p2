@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Supervisor - Tu Empresa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Definición de variables CSS para un estilo corporativo */
+        :root {
+            --primary-corporate-blue: #007bff; /* Azul corporativo estándar */
+            --dark-corporate-blue: #0056b3; /* Azul más oscuro para hover */
+            --light-grey-bg: #e0e7ed; /* Fondo general muy claro */
+            --light-grey-bg-alt: #f8f9fa; /* Fondo alternativo para gradiente */
+            --card-background: #ffffff; /* Fondo de tarjetas */
+            --text-main: #34495e; /* Texto oscuro principal */
+            --text-secondary: #7f8c8d; /* Texto secundario/desactivado */
+            --border-subtle: #e0e6ed; /* Borde sutil */
+            --shadow-light: 0 4px 12px rgba(0,0,0,0.08); /* Sombra suave */
+            --shadow-deep: 0 10px 25px rgba(0,0,0,0.15); /* Sombra más pronunciada */
+        }
+
+        body {
+            background: linear-gradient(to bottom right, var(--light-grey-bg), var(--light-grey-bg-alt)); /* Gradiente sutil */
+            font-family: 'Inter', sans-serif; /* Fuente moderna y limpia */
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh; /* Ocupa toda la altura de la ventana */
+            width: 100vw; /* Ocupa todo el ancho de la ventana */
+            margin: 0;
+            padding: 2.5rem; /* Padding general para toda la página */
+            box-sizing: border-box; /* Incluye padding en el ancho/alto total */
+        }
+
+        .main-wrapper {
+            width: 100%;
+            max-width: 1200px; /* Contenedor más amplio */
+            margin: 0 auto; /* Centrar el contenido */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1; /* Permite que el wrapper crezca y llene el espacio */
+        }
+
+        .menu-container {
+            background-color: var(--card-background);
+            padding: 3.5rem 3rem; /* Más padding para un aspecto premium */
+            border-radius: 15px;
+            box-shadow: var(--shadow-deep); /* Sombra más pronunciada */
+            text-align: center;
+            width: 100%;
+            animation: fadeInScale 0.6s ease-out; /* Animación de entrada */
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        h1 {
+            font-size: 2.8rem; /* Título más grande */
+            color: var(--primary-corporate-blue);
+            margin-bottom: 2.5rem;
+            font-weight: 700;
+        }
+
+        .welcome-message {
+            font-size: 1.4rem; /* Mensaje de bienvenida más grande */
+            color: var(--text-main);
+            margin-bottom: 2.5rem;
+            font-weight: 600;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Una columna por defecto */
+            gap: 2rem; /* Más espacio entre elementos del grid */
+            margin-bottom: 2.5rem;
+        }
+
+        @media (min-width: 576px) { /* Para pantallas pequeñas (sm) y más grandes */
+            .menu-grid {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Más ítems por fila en pantallas más anchas */
+                gap: 2.5rem;
+            }
+        }
+        @media (min-width: 768px) { /* Para pantallas medianas (md) y más grandes */
+            .menu-grid {
+                grid-template-columns: repeat(2, 1fr); /* Fijar a 2 columnas para una estética balanceada */
+            }
+        }
+        @media (min-width: 992px) { /* Para pantallas grandes (lg) y más grandes */
+            .menu-grid {
+                grid-template-columns: repeat(3, 1fr); /* 3 columnas en pantallas grandes */
+            }
+        }
+
+        .menu-item {
+            text-decoration: none;
+            background-color: var(--primary-corporate-blue); /* Color principal del botón */
+            color: white;
+            padding: 2rem; /* Más padding para los botones */
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.2rem; /* Fuente más grande para el texto del botón */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* Sombra inicial */
+            position: relative;
+            overflow: hidden; /* Para el efecto de brillo */
+        }
+
+        .menu-item:hover {
+            background-color: var(--dark-corporate-blue);
+            transform: translateY(-8px); /* Efecto de levantamiento más pronunciado */
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.25); /* Sombra más profunda al pasar el mouse */
+            color: white; /* Asegura que el color del texto no cambie en hover */
+        }
+
+        /* Efecto de brillo en hover */
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.15); /* Blanco semitransparente */
+            transform: skewX(-20deg);
+            transition: all 0.5s ease;
+            z-index: 0;
+        }
+        .menu-item:hover::before {
+            left: 100%;
+        }
+
+        .menu-item i {
+            font-size: 3rem; /* Iconos mucho más grandes */
+            margin-bottom: 1rem;
+            color: rgba(255, 255, 255, 0.85); /* Icono ligeramente transparente */
+        }
+
+        .logout-link {
+            display: inline-block;
+            margin-top: 2rem; /* Más margen superior */
+            font-size: 1.1rem; /* Fuente más grande */
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .logout-link:hover {
+            color: var(--primary-corporate-blue);
+            text-decoration: underline;
+        }
+
+        /* Mensajes Flash */
+        .alert {
+            margin-top: 1rem;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .alert-success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+        .alert .btn-close {
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="menu-container">
+            <h1>Bienvenido</h1>
+            <p class="welcome-message">{{ user|capitalize }}</p>
+
+            {# Mensajes Flash #}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-4">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar alerta"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="menu-grid">
+                <a href="{{ url_for('lista1') }}" class="menu-item">
+                    <i class="fas fa-clipboard-list"></i>
+                    Lista de Precios
+                </a>
+                <a href="{{ url_for('presupuesto_creator') }}" class="menu-item">
+                    <i class="fas fa-calculator"></i>
+                    Generar Presupuesto
+                </a>
+                <a href="{{ url_for('creditocap') }}" class="menu-item">
+                    <i class="fas fa-file-invoice"></i>
+                    Registrar Venta
+                </a>
+                <a href="{{ url_for('product_catalog') }}" class="menu-item">
+                    <i class="fas fa-boxes"></i>
+                    Catálogo de Productos
+                </a>
+                <a href="{{ url_for('pagarecap') }}" class="menu-item">
+                    <i class="fas fa-money-check-alt"></i>
+                    Créditos Personales
+                </a>
+            </div>
+
+            <a href="{{ url_for('logout') }}" class="logout-link">
+                <i class="fas fa-sign-out-alt me-1"></i>Cerrar sesión
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

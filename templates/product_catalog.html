@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Productos - Tu Empresa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Definición de variables CSS para colores y sombras */
+        :root {
+            --primary-color: #28a745; /* Verde Bootstrap Success */
+            --primary-hover-color: #218838;
+            --secondary-color: #4d96d6; /* Gris Bootstrap Secondary */
+            --background-light: #093d72; /* Fondo claro */
+            --background-medium: #eef2f7; /* Fondo medio */
+            --card-background: #ffffff; /* Fondo para tarjetas/secciones */
+            --text-dark: #1d3557; /* Texto oscuro principal */
+            --text-muted: #667e91; /* Texto secundario/apagado */
+            --border-color: #e0e6ed; /* Color de borde */
+            --shadow-light: 0 4px 12px rgba(0,0,0,0.08); /* Sombra ligera */
+            --shadow-hover: 0 6px 16px rgba(0,0,0,0.12); /* Sombra al pasar el mouse */
+        }
+
+        body {
+            background-color: var(--background-medium);
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        h2 {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .container-fluid {
+            padding: 2.5rem;
+            position: relative;
+        }
+
+        .card-custom {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: var(--shadow-light);
+            margin-bottom: 2rem;
+            height: 100%; /* Asegura que la tarjeta se estire en el grid */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Empuja el botón al final */
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            padding: 0.6rem 1.25rem;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover-color);
+            border-color: var(--primary-hover-color);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+            transform: translateY(-1px);
+        }
+
+        .form-control {
+            border-color: var(--border-color);
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            padding: 0.6rem 0.75rem;
+        }
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+        }
+
+        .product-card {
+            text-align: center;
+        }
+
+        .product-image {
+            width: 180px; /* Tamaño fijo */
+            height: 180px; /* Tamaño fijo */
+            object-fit: contain; /* Ajusta la imagen manteniendo su aspecto */
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-light);
+            margin-bottom: 1rem;
+        }
+
+        .product-name {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            min-height: 2.2em; /* Asegura espacio para 2 líneas */
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Centra el texto si es más corto */
+        }
+
+        .product-code {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .price-info p {
+            margin-bottom: 0.3rem;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .price-info .precio-final {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        .price-info .cont-efectivo {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 1rem;
+        }
+
+        /* Estilo para la descripción */
+        .product-description {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            min-height: 3em; /* Espacio para algunas líneas de descripción */
+            text-align: left; /* Alinea el texto de la descripción a la izquierda */
+            overflow: hidden; /* Oculta el desbordamiento si la descripción es muy larga */
+            text-overflow: ellipsis; /* Añade puntos suspensivos */
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* Limita a 3 líneas */
+            -webkit-box-orient: vertical;
+        }
+
+
+        .no-products-message {
+            text-align: center;
+            padding: 2rem;
+            background-color: var(--background-light);
+            border-radius: 10px;
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Mensajes Flash */
+        .alert {
+            margin-top: 1rem;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+        }
+        .alert-success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+
+        @media (max-width: 767.98px) {
+            .product-image {
+                width: 150px;
+                height: 150px;
+            }
+            .product-name {
+                font-size: 1rem;
+            }
+            .price-info .precio-final {
+                font-size: 1rem;
+            }
+            .price-info .cont-efectivo {
+                font-size: 0.95rem;
+            }
+            .product-description {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        {# Botón Volver al Menú #}
+        <a href="{{ url_for('menu2') }}" class="btn btn-secondary btn-volver-menu">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Menú
+        </a>
+
+        <h2><i class="fas fa-box-open me-2"></i>Catálogo de Productos</h2>
+
+        {# Mensajes Flash #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="row justify-content-center">
+                    <div class="col-md-10">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar alerta"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {# Barra de búsqueda #}
+        <div class="row mb-4 justify-content-center">
+            <div class="col-md-6">
+                <input type="text" id="productSearch" class="form-control" placeholder="Buscar por nombre o código..." aria-label="Buscar productos">
+            </div>
+        </div>
+
+        {# Contenedor de productos #}
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="productsContainer">
+            {# Los productos se cargarán aquí #}
+        </div>
+
+        {# Mensaje si no hay productos #}
+        <div id="noProductsFound" class="no-products-message mt-5" style="display: none;">
+            <i class="fas fa-info-circle me-2"></i>No se encontraron productos que coincidan con su búsqueda.
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const productsContainer = document.getElementById('productsContainer');
+            const productSearchInput = document.getElementById('productSearch');
+            const noProductsFoundMessage = document.getElementById('noProductsFound');
+            let allProducts = []; // Almacena todos los productos
+
+            const currencyFormatter = new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            });
+
+            async function fetchProducts() {
+                try {
+                    const response = await fetch('/api/get_lista1_items');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    allProducts = await response.json();
+                    console.log("Productos cargados para catálogo:", allProducts);
+                    renderProducts(allProducts); // Renderiza todos los productos al inicio
+                } catch (error) {
+                    console.error("Error al cargar productos para el catálogo:", error);
+                    productsContainer.innerHTML = `<div class="col-12 text-center text-danger">Error al cargar productos.</div>`;
+                    noProductsFoundMessage.style.display = 'none'; // Asegura que el mensaje de "no encontrado" no se muestre por error
+                }
+            }
+
+            function renderProducts(productsToRender) {
+                productsContainer.innerHTML = ''; // Limpiar contenedor
+                if (productsToRender.length === 0) {
+                    noProductsFoundMessage.style.display = 'block';
+                    return;
+                }
+                noProductsFoundMessage.style.display = 'none';
+
+                productsToRender.forEach(p => {
+                    const productCardCol = document.createElement('div');
+                    productCardCol.className = 'col';
+                    productCardCol.innerHTML = `
+                        <div class="card-custom product-card">
+                            <img src="/get_image/${p.image_id || 'NO_IMAGE'}" alt="Imagen de ${p['Nombre Producto'] || 'Producto'}" class="product-image" onerror="this.onerror=null;this.src='/get_image/NO_IMAGE';">
+                            <h5 class="product-name">${p['Nombre Producto'] || 'Sin Nombre'}</h5>
+                            <p class="product-code">Cód: ${p['Código'] || 'N/A'}</p>
+                            <div class="price-info">
+                                <p class="precio-final">P. Final: ${currencyFormatter.format(p['PRECIO FINAL'] || 0)}</p>
+                                <p class="cont-efectivo">Contado Efectivo: ${currencyFormatter.format(p['cont efectivo'] || 0)}</p>
+                                <p class="product-description">${p['Descripción'] || 'No hay descripción disponible.'}</p>
+                            </div>
+                            <button class="btn btn-primary btn-sm mt-3 w-100" onclick="alert('Se podría añadir funcionalidad de añadir al presupuesto aquí o ver detalles.');">
+                                <i class="fas fa-info-circle me-1"></i>Más Info
+                            </button>
+                        </div>
+                    `;
+                    productsContainer.appendChild(productCardCol);
+                });
+            }
+
+            // Filtrar productos al escribir en la barra de búsqueda
+            productSearchInput.addEventListener('input', function() {
+                const searchTerm = productSearchInput.value.toLowerCase().trim();
+                const filteredProducts = allProducts.filter(p => {
+                    const name = (p['Nombre Producto'] || '').toLowerCase();
+                    const code = (p['Código'] || '').toLowerCase();
+                    const description = (p['Descripción'] || '').toLowerCase(); // Incluir descripción en la búsqueda
+                    return name.includes(searchTerm) || code.includes(searchTerm) || description.includes(searchTerm);
+                });
+                renderProducts(filteredProducts);
+            });
+
+            fetchProducts(); // Cargar productos al iniciar la página
+        });
+    </script>
+</body>
+</html>

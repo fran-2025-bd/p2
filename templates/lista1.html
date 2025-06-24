@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>📋 Lista de Precio</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f5f8fa;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .volver {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            text-decoration: none;
+            color: #1a73e8;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .volver:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            font-size: 22px;
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: #1a73e8;
+            color: #fff;
+            font-weight: 500;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('menu2') }}" class="volver">← Volver al menú</a>
+
+        <h1>📋 Lista de Precios</h1>
+
+        {% if registros %}
+            <input type="text" id="searchInput" placeholder="🔍 Buscar...">
+            <table id="tablaPrecios">
+                <thead>
+                    <tr>
+                        {% for key in registros[0].keys() %}
+                            {% if key not in ['URL Imagen', 'Descripción'] %} {# Excluir estas columnas #}
+                                <th>{{ key }}</th>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in registros %}
+                        <tr>
+                            {% for key, value in fila.items() %} {# Usar .items() para acceder a la clave #}
+                                {% if key not in ['URL Imagen', 'Descripción'] %} {# Excluir estas columnas #}
+                                    <td>{{ value }}</td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No hay datos disponibles.</p>
+        {% endif %}
+    </div>
+
+    <script>
+        const searchInput = document.getElementById("searchInput");
+        const rows = document.querySelectorAll("#tablaPrecios tbody tr");
+
+        searchInput.addEventListener("keyup", function () {
+            const filter = searchInput.value.toLowerCase();
+
+            rows.forEach(row => {
+                // Modificado para buscar solo en las columnas visibles si es necesario.
+                // Actualmente, innerText busca en todo el texto, lo cual es simple y efectivo.
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(filter) ? "" : "none";
+            });
+        });
+    </script>
+</body>
+</html>

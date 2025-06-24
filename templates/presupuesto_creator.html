@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Presupuesto - Tu Empresa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Definición de variables CSS para colores y sombras */
+        :root {
+            --primary-color: #28a745; /* Verde Bootstrap Success */
+            --primary-hover-color: #218838;
+            --secondary-color: #6c757d; /* Gris Bootstrap Secondary */
+            --background-light: #f8f9fa; /* Fondo claro */
+            --background-medium: #eef2f7; /* Fondo medio */
+            --card-background: #ffffff; /* Fondo para tarjetas/secciones */
+            --text-dark: #1d3557; /* Texto oscuro principal */
+            --text-muted: #667e91; /* Texto secundario/apagado */
+            --border-color: #e0e6ed; /* Color de borde */
+            --shadow-light: 0 4px 12px rgba(0,0,0,0.08); /* Sombra ligera */
+            --shadow-hover: 0 6px 16px rgba(0,0,0,0.12); /* Sombra al pasar el mouse */
+        }
+
+        body {
+            background-color: var(--background-medium);
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        h2 {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .container-fluid {
+            padding: 2.5rem;
+            position: relative;
+        }
+
+        .card-custom {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: var(--shadow-light);
+            margin-bottom: 2rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            padding: 0.6rem 1.25rem;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover-color);
+            border-color: var(--primary-hover-color);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+            transform: translateY(-1px);
+        }
+
+        .form-control, .form-select {
+            border-color: var(--border-color);
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            padding: 0.6rem 0.75rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+        }
+
+        .item-row {
+            display: flex;
+            align-items: flex-start; /* Alinea los elementos al inicio */
+            margin-bottom: 15px;
+            gap: 10px; /* Espacio entre elementos en la fila */
+            flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
+            padding-bottom: 10px;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .item-row .col {
+            padding: 0;
+            margin-bottom: 10px; /* Espacio entre columnas apiladas en móvil */
+        }
+        .item-row label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem; /* Ajuste para un estilo más compacto */
+            display: block;
+            font-size: 0.85rem;
+        }
+        .item-row .info-display { /* Clase general para mostrar datos */
+            background-color: var(--background-light);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 0.75rem;
+            border-radius: 0.25rem;
+            display: flex;
+            align-items: center;
+            min-height: calc(2.25rem + 2px); /* Altura igual a un form-control estándar de Bootstrap */
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        /* Estilo para los subtotales en la columna detallada */
+        .item-row .other-subtotal-display {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            line-height: 1.2;
+            padding: 0.3rem 0;
+        }
+        .item-row .precio-final-subtotal-display {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* Ajuste de anchos de columnas en desktop para la fila principal */
+        .item-row .col-item-details { flex: 7; max-width: 58.333333%; } /* Más espacio para imagen + inputs */
+        .item-row .col-detailed-subtotals { flex: 4; max-width: 33.333333%; min-width: 180px; } /* Subtotales Calculados */
+        .item-row .col-actions { flex: 1; max-width: 8.333333%; min-width: 40px; } /* Eliminar */
+
+        /* Estilos para el grupo de Imagen y Entradas */
+        .product-visual-group {
+            display: flex;
+            flex-direction: column; /* Apilado por defecto en móvil */
+            align-items: flex-start;
+            gap: 15px; /* Espacio entre imagen y grupo de inputs */
+            width: 100%;
+        }
+        @media (min-width: 768px) { /* En pantallas medianas y grandes, lado a lado */
+            .product-visual-group {
+                flex-direction: row;
+                align-items: center; /* Centrar verticalmente imagen e inputs */
+            }
+        }
+
+        /* Nuevos estilos para la imagen del producto */
+        .product-image-container {
+            /* Eliminamos padding, background-color, border, border-radius redundantes */
+            text-align: center; /* Centrar la imagen en su contenedor */
+            flex-shrink: 0; /* Evitar que la imagen se encoja en flexbox */
+        }
+        .product-thumbnail {
+            width: 180px; /* Tamaño fijo de la miniatura */
+            height: 180px; /* Tamaño fijo de la miniatura */
+            object-fit: contain; /* Ajusta la imagen para que quepa manteniendo su aspecto */
+            border-radius: 8px; /* Bordes redondeados */
+            border: 1px solid var(--border-color); /* Borde sutil */
+            box-shadow: var(--shadow-light); /* Sombra ligera para profundidad */
+            display: block; /* Para asegurar que margin: auto funcione si es necesario */
+            margin: auto; /* Centrar la imagen si su contenedor es más grande */
+        }
+
+        /* Estilos para el grupo de inputs del producto */
+        .product-inputs-wrapper {
+            flex-grow: 1; /* Permite que este contenedor ocupe el espacio restante en flexbox */
+        }
+        /* Ajuste para los nuevos inputs de artículo y código */
+        .product-inputs-wrapper .form-control {
+            width: 100%; /* Asegura que los inputs llenen su columna */
+        }
+        .product-inputs-wrapper .col-md-8 { /* Columna que contiene Artículo y Código */
+            flex: 2; /* Dale más espacio para que los campos sean más largos */
+            max-width: 66.6666%; /* Equivalente a 8 de 12 columnas */
+        }
+        .product-inputs-wrapper .col-md-4 { /* Columna que contiene Cantidad */
+            flex: 1; /* Dale menos espacio */
+            max-width: 33.3333%; /* Equivalente a 4 de 12 columnas */
+            margin-top: 0; /* Asegura que no haya margen superior en desktop */
+        }
+        @media (max-width: 767.98px) { /* Móviles: apila Cantidad debajo */
+            .product-inputs-wrapper .col-md-8,
+            .product-inputs-wrapper .col-md-4 {
+                flex: none;
+                max-width: 100%;
+                margin-top: 10px; /* Espacio entre los grupos apilados */
+            }
+            .product-inputs-wrapper .col-md-4 { /* Cantidad */
+                align-self: flex-end; /* Alinea Cantidad a la derecha en móvil si el layout es apilado */
+            }
+            .product-inputs-wrapper .row.g-2 > div:last-child {
+                margin-top: 0 !important; /* Elimina margen si es el último en un row apilado */
+            }
+        }
+
+
+        /* Estilos mejorados para la sección de totales */
+        .total-summary-card {
+            background-color: var(--background-light); /* Fondo más claro para el resumen */
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow-light);
+            margin-top: 30px;
+        }
+        .total-summary-card h5 {
+            color: var(--text-dark);
+            margin-bottom: 15px;
+            text-align: center; /* Centrar el título del resumen */
+        }
+        .total-summary-card div { /* Para cada línea de total */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed var(--border-color);
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .total-summary-card div:last-child {
+            border-bottom: none; /* Sin borde en la última línea */
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .total-summary-card div span {
+            font-size: 1.25rem; /* Monto del total */
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .total-summary-card div.cuotas-total-line {
+            color: var(--text-muted); /* Color diferente para totales de cuotas */
+            font-size: 0.95rem; /* Un poco más pequeño para diferenciar */
+        }
+        .total-summary-card div.cuotas-total-line span {
+            color: var(--text-muted); /* Monto de cuotas con color más suave */
+            font-size: 1.1rem;
+        }
+
+
+        /* Mensajes Flash */
+        .alert {
+            margin-top: 1rem;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+        }
+        .alert-success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+
+        @media (max-width: 991.98px) { /* Ajustes para tabletas y móviles (menor a 992px) */
+            .item-row {
+                flex-direction: column; /* Apila los elementos verticalmente */
+                align-items: stretch; /* Estira los elementos para ocupar todo el ancho */
+                gap: 5px; /* Menos espacio entre elementos apilados */
+            }
+            .item-row > div {
+                width: 100%; /* Cada columna ocupa el 100% del ancho disponible */
+                flex: none; /* Desactiva el flex-grow/shrink */
+                max-width: 100%; /* Asegura que no haya anchos fijos que desborden */
+                min-width: unset; /* Reinicia el min-width */
+            }
+            .item-row .col-actions {
+                text-align: right;
+                margin-top: 10px; /* Espacio arriba del botón eliminar */
+            }
+            .item-row .info-display,
+            .item-row .other-subtotal-display {
+                font-size: 0.9rem;
+            }
+            .total-section {
+                font-size: 1.2rem;
+                text-align: center;
+            }
+            .total-summary-card div {
+                font-size: 1rem;
+                flex-direction: column; /* Apila etiqueta y monto en móvil */
+                align-items: flex-start;
+            }
+            .total-summary-card div span {
+                font-size: 1.1rem;
+            }
+            .total-summary-card div.cuotas-total-line {
+                font-size: 0.9rem;
+            }
+            .total-summary-card div.cuotas-total-line span {
+                font-size: 1rem;
+            }
+            .product-thumbnail {
+                width: 120px; /* Un poco más pequeño en móvil */
+                height: 120px;
+            }
+        }
+        
+        /* Ajustes específicos para pantallas muy pequeñas (celulares) */
+        @media (max-width: 575.98px) { /* Menor a 576px */
+            .product-thumbnail {
+                width: 100px; /* Aún más pequeño en móviles muy chicos */
+                height: 100px;
+            }
+            .item-row .info-display, .form-control, .form-select, .form-input { /* Agregado form-input */
+                font-size: 0.8rem; /* Ajuste de fuente para encajar mejor */
+                padding: 0.5rem 0.6rem;
+            }
+            .item-row label {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        {# Botón Volver al Menú (ajustar la ruta según tu menú actual) #}
+        <a href="{{ url_for('menu2') }}" class="btn btn-secondary btn-volver-menu">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Menú
+        </a>
+
+        <h2><i class="fas fa-calculator me-2"></i>Generador de Presupuestos</h2>
+
+        {# Mensajes Flash #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="row justify-content-center">
+                    <div class="col-md-10">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar alerta"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="card-custom">
+            <h5 class="mb-4">Seleccionar Artículos</h5>
+            <div id="itemsContainer">
+                {# Las filas de artículos se añadirán aquí dinámicamente con JavaScript #}
+            </div>
+
+            <button type="button" id="addItemBtn" class="btn btn-secondary mt-3">
+                <i class="fas fa-plus-circle me-2"></i>Agregar Artículo
+            </button>
+
+            {# Sección de totales con nueva clase para estilo #}
+            <div class="total-summary-card">
+                <h5 class="mb-3"><i class="fas fa-dollar-sign me-2"></i>Resumen de Totales</h5>
+                <div>Total P. Final: <span id="grandTotalPrecioFinal">0,00 ARS</span></div>
+                <div>Total Contado Efectivo: <span id="grandTotalContEfectivo">0,00 ARS</span></div>
+                <div class="cuotas-total-line">Total 2 Cuotas (por unidad): <span id="grandTotalCuotas2">0,00 ARS</span></div>
+                <div class="cuotas-total-line">Total 3 Cuotas (por unidad): <span id="grandTotalCuotas3">0,00 ARS</span></div>
+                <div class="cuotas-total-line">Total 6 Cuotas (por unidad): <span id="grandTotalCuotas6">0,00 ARS</span></div>
+                <div class="cuotas-total-line">Total 9 Cuotas (por unidad): <span id="grandTotalCuotas9">0,00 ARS</span></div>
+                <div class="cuotas-total-line">Total 12 Cuotas (por unidad): <span id="grandTotalCuotas12">0,00 ARS</span></div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="button" id="generateBudgetBtn" class="btn btn-primary btn-lg">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>Generar Presupuesto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const itemsContainer = document.getElementById('itemsContainer');
+            const addItemBtn = document.getElementById('addItemBtn');
+            // Referencias a los nuevos spans de totales
+            const grandTotalPrecioFinalSpan = document.getElementById('grandTotalPrecioFinal');
+            const grandTotalContEfectivoSpan = document.getElementById('grandTotalContEfectivo');
+            const grandTotalCuotas2Span = document.getElementById('grandTotalCuotas2');
+            const grandTotalCuotas3Span = document.getElementById('grandTotalCuotas3');
+            const grandTotalCuotas6Span = document.getElementById('grandTotalCuotas6');
+            const grandTotalCuotas9Span = document.getElementById('grandTotalCuotas9');
+            const grandTotalCuotas12Span = document.getElementById('grandTotalCuotas12');
+
+            let products = []; // Para almacenar los productos de la hoja "lista1"
+
+            // Formateador de moneda para ARS
+            const currencyFormatter = new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            });
+
+            // Función para obtener los productos desde el backend
+            async function fetchProducts() {
+                try {
+                    const response = await fetch('/api/get_lista1_items');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    products = await response.json();
+                    console.log("Productos cargados (desde API):", products); // Log completo de los productos
+
+                    if (products.length > 0) {
+                        console.log("Primer producto en la lista (para verificar estructura):", products[0]);
+                        // Verifica si la clave 'Nombre Producto' existe y no está vacía
+                        if (!products[0]['Nombre Producto']) {
+                            console.error("Advertencia: El primer producto no tiene la clave 'Nombre Producto' o está vacía. Verifica el encabezado de tu hoja 'lista1'.");
+                        }
+                    } else {
+                        console.warn("La lista de productos está vacía. Asegúrate que la hoja 'lista1' no esté vacía y que las columnas sean correctas.");
+                    }
+                    
+                    // Popula las datalists globales con los nombres de productos y códigos
+                    const productListOptions = document.getElementById('productListOptions');
+                    const codeListOptions = document.getElementById('codeListOptions');
+                    
+                    // Limpia las opciones existentes
+                    productListOptions.innerHTML = '';
+                    codeListOptions.innerHTML = '';
+
+                    // Añade opciones a las datalists
+                    products.forEach(p => {
+                        if (p['Nombre Producto']) {
+                            const option = document.createElement('option');
+                            option.value = p['Nombre Producto'];
+                            productListOptions.appendChild(option);
+                        }
+                        if (p['Código']) {
+                            const option = document.createElement('option');
+                            option.value = p['Código'];
+                            codeListOptions.appendChild(option);
+                        }
+                    });
+
+
+                } catch (error) {
+                    console.error("Error al cargar productos (fetchProducts):", error);
+                    alert("Error al cargar la lista de productos. Por favor, recarga la página.");
+                }
+            }
+
+            // Función para añadir una nueva fila de artículo
+            function addProductRow() {
+                const rowId = `item-row-${Date.now()}`; // ID único para cada fila
+                const itemRowDiv = document.createElement('div');
+                itemRowDiv.className = 'item-row row g-2 align-items-start'; // Usamos Bootstrap grid
+                itemRowDiv.id = rowId;
+
+                itemRowDiv.innerHTML = `
+                    <div class="col-12 col-lg-7 col-item-details">
+                        <div class="product-visual-group">
+                            <div class="product-image-container">
+                                <img src="/get_image/NO_IMAGE" alt="Imagen del Producto" class="product-thumbnail" onerror="this.onerror=null;this.src='/get_image/NO_IMAGE';">
+                            </div>
+                            <div class="product-inputs-wrapper">
+                                <div class="row g-2">
+                                    <div class="col-12 col-md-8">
+                                        <div class="mb-3">
+                                            <label for="productNameInput-${rowId}">Artículo:</label>
+                                            <input type="text" id="productNameInput-${rowId}" class="form-control product-name-input" list="productListOptions" placeholder="Escriba el artículo..." aria-label="Seleccionar artículo">
+                                        </div>
+                                        <div>
+                                            <label for="codeInput-${rowId}">Código:</label>
+                                            <input type="text" id="codeInput-${rowId}" class="form-control code-input" list="codeListOptions" placeholder="Escriba el código..." aria-label="Código del producto">
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-4 d-flex flex-column justify-content-end">
+                                        <label for="quantityInput-${rowId}">Cantidad:</label>
+                                        <input type="number" id="quantityInput-${rowId}" class="form-control quantity-input" value="1" min="1" aria-label="Cantidad">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Columna para todos los subtotales detallados #}
+                    <div class="col-12 col-lg-4 col-detailed-subtotals">
+                        <label>Subtotales Calculados:</label>
+                        <div class="d-flex flex-column info-display" style="gap: 5px;">
+                            <span class="precio-final-subtotal-display other-subtotal-display">P. Final: ${currencyFormatter.format(0)}</span>
+                            <span class="cont-efectivo-subtotal-display other-subtotal-display">Cont. Efectivo: ${currencyFormatter.format(0)}</span>
+                            <span class="cuotas-2-total-display other-subtotal-display">2 Cuotas de: ${currencyFormatter.format(0)}</span>
+                            <span class="cuotas-3-total-display other-subtotal-display">3 Cuotas de: ${currencyFormatter.format(0)}</span>
+                            <span class="cuotas-6-total-display other-subtotal-display">6 Cuotas de: ${currencyFormatter.format(0)}</span>
+                            <span class="cuotas-9-total-display other-subtotal-display">9 Cuotas de: ${currencyFormatter.format(0)}</span>
+                            <span class="cuotas-12-total-display other-subtotal-display">12 Cuotas de: ${currencyFormatter.format(0)}</span>
+                        </div>
+                    </div>
+
+                    <div class="col-4 col-lg-1 col-actions d-flex justify-content-end align-items-center">
+                        <button type="button" class="btn btn-danger btn-sm remove-item-btn" aria-label="Eliminar artículo">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                itemsContainer.appendChild(itemRowDiv);
+
+                // Añadir event listeners a los nuevos elementos
+                const productNameInput = itemRowDiv.querySelector(`#productNameInput-${rowId}`);
+                const codeInput = itemRowDiv.querySelector(`#codeInput-${rowId}`);
+                const quantityInput = itemRowDiv.querySelector(`#quantityInput-${rowId}`);
+                const removeBtn = itemRowDiv.querySelector('.remove-item-btn');
+
+                // Usamos 'input' para capturar cambios de datalist o escritura directa
+                productNameInput.addEventListener('input', (event) => updateRow(event, 'name'));
+                codeInput.addEventListener('input', (event) => updateRow(event, 'code'));
+                quantityInput.addEventListener('input', updateRow);
+                removeBtn.addEventListener('click', function() {
+                    itemRowDiv.remove();
+                    calculateGrandTotals(); 
+                });
+
+                updateRow({ target: productNameInput }, 'name'); // Actualizar la fila recién añadida
+            }
+
+            // Función para actualizar el precio unitario y subtotal de una fila
+            function updateRow(event, changedField = null) {
+                const rowDiv = event.target.closest('.item-row');
+                const productNameInput = rowDiv.querySelector('.product-name-input');
+                const codeInput = rowDiv.querySelector('.code-input');
+                const quantityInput = rowDiv.querySelector('.quantity-input');
+                
+                // Elementos de display
+                const productThumbnail = rowDiv.querySelector('.product-thumbnail'); // Referencia a la imagen
+                
+                // Elementos de display para los NUEVOS subtotales calculados
+                const precioFinalSubtotalDisplay = rowDiv.querySelector('.precio-final-subtotal-display');
+                const contEfectivoSubtotalDisplay = rowDiv.querySelector('.cont-efectivo-subtotal-display');
+                const cuotas2TotalDisplay = rowDiv.querySelector('.cuotas-2-total-display');
+                const cuotas3TotalDisplay = rowDiv.querySelector('.cuotas-3-total-display');
+                const cuotas6TotalDisplay = rowDiv.querySelector('.cuotas-6-total-display');
+                const cuotas9TotalDisplay = rowDiv.querySelector('.cuotas-9-total-display');
+                const cuotas12TotalDisplay = rowDiv.querySelector('.cuotas-12-total-display');
+
+                const productName = productNameInput.value.trim();
+                const productCode = codeInput.value.trim();
+                const quantity = parseInt(quantityInput.value) || 0;
+
+                let selectedProduct = null;
+
+                // Lógica para encontrar el producto basado en nombre o código
+                if (changedField === 'name' && productName) {
+                    selectedProduct = products.find(p => p['Nombre Producto'].toLowerCase() === productName.toLowerCase());
+                } else if (changedField === 'code' && productCode) {
+                    selectedProduct = products.find(p => p['Código'] && p['Código'].toLowerCase() === productCode.toLowerCase());
+                } else if (productName) { // Si no hay campo cambiado explícito, busca por nombre si existe
+                    selectedProduct = products.find(p => p['Nombre Producto'].toLowerCase() === productName.toLowerCase());
+                } else if (productCode) { // Si no hay nombre, busca por código
+                    selectedProduct = products.find(p => p['Código'] && p['Código'].toLowerCase() === productCode.toLowerCase());
+                }
+
+                if (selectedProduct) {
+                    // Actualiza el otro campo si se encontró el producto y el campo no fue el que cambió
+                    if (changedField !== 'name') productNameInput.value = selectedProduct['Nombre Producto'];
+                    if (changedField !== 'code') codeInput.value = selectedProduct['Código'] || '';
+
+                    const contEfectivo = parseFloat(selectedProduct['cont efectivo'] || 0);
+                    const precioFinal = parseFloat(selectedProduct['PRECIO FINAL'] || 0);
+                    const cuotas2 = parseFloat(selectedProduct['2 CUOTAS DE'] || 0);
+                    const cuotas3 = parseFloat(selectedProduct['3 CUOTAS DE'] || 0);
+                    const cuotas6 = parseFloat(selectedProduct['6 CUOTAS DE'] || 0);
+                    const cuotas9 = parseFloat(selectedProduct['9 CUOTAS DE'] || 0);
+                    const cuotas12 = parseFloat(selectedProduct['12 CUOTAS DE'] || 0);
+                    const imageId = selectedProduct['image_id'] || 'NO_IMAGE';
+
+                    productThumbnail.src = `/get_image/${imageId}`; 
+                    productThumbnail.alt = `Imagen de ${selectedProduct['Nombre Producto']}`;
+
+                    const subtotalPrecioFinal = precioFinal * quantity;
+                    const subtotalContEfectivo = contEfectivo * quantity;
+                    const subtotalCuotas2 = cuotas2 * quantity; 
+                    const subtotalCuotas3 = cuotas3 * quantity;
+                    const subtotalCuotas6 = cuotas6 * quantity;
+                    const subtotalCuotas9 = cuotas9 * quantity;
+                    const subtotalCuotas12 = cuotas12 * quantity;
+
+                    precioFinalSubtotalDisplay.textContent = `P. Final: ${currencyFormatter.format(subtotalPrecioFinal)}`;
+                    contEfectivoSubtotalDisplay.textContent = `Cont. Efectivo: ${currencyFormatter.format(subtotalContEfectivo)}`;
+                    cuotas2TotalDisplay.textContent = `2 Cuotas de: ${currencyFormatter.format(subtotalCuotas2)}`; 
+                    cuotas3TotalDisplay.textContent = `3 Cuotas de: ${currencyFormatter.format(subtotalCuotas3)}`; 
+                    cuotas6TotalDisplay.textContent = `6 Cuotas de: ${currencyFormatter.format(subtotalCuotas6)}`; 
+                    cuotas9TotalDisplay.textContent = `9 Cuotas de: ${currencyFormatter.format(subtotalCuotas9)}`; 
+                    cuotas12TotalDisplay.textContent = `12 Cuotas de: ${currencyFormatter.format(subtotalCuotas12)}`; 
+                } else {
+                    // Si no se encuentra el producto, restablecer displays
+                    if (changedField !== 'name') productNameInput.value = productName; // Mantener lo que el usuario escribió
+                    if (changedField !== 'code') codeInput.value = productCode; // Mantener lo que el usuario escribió
+
+                    productThumbnail.src = `/get_image/NO_IMAGE`;
+                    productThumbnail.alt = `Imagen del Producto`;
+                    
+                    precioFinalSubtotalDisplay.textContent = `P. Final: ${currencyFormatter.format(0)}`;
+                    contEfectivoSubtotalDisplay.textContent = `Cont. Efectivo: ${currencyFormatter.format(0)}`;
+                    cuotas2TotalDisplay.textContent = `2 Cuotas de: ${currencyFormatter.format(0)}`; 
+                    cuotas3TotalDisplay.textContent = `3 Cuotas de: ${currencyFormatter.format(0)}`; 
+                    cuotas6TotalDisplay.textContent = `6 Cuotas de: ${currencyFormatter.format(0)}`; 
+                    cuotas9TotalDisplay.textContent = `9 Cuotas de: ${currencyFormatter.format(0)}`; 
+                    cuotas12TotalDisplay.textContent = `12 Cuotas de: ${currencyFormatter.format(0)}`; 
+                }
+                calculateGrandTotals();
+            }
+
+            // Función para calcular los totales generales de todas las opciones de pago
+            function calculateGrandTotals() { 
+                let totalPrecioFinal = 0;
+                let totalContEfectivo = 0;
+                let totalCuotas2 = 0;
+                let totalCuotas3 = 0;
+                let totalCuotas6 = 0;
+                let totalCuotas9 = 0;
+                let totalCuotas12 = 0;
+
+                document.querySelectorAll('.item-row').forEach(row => {
+                    const productNameInput = row.querySelector('.product-name-input');
+                    const codeInput = row.querySelector('.code-input');
+                    const quantityInput = row.querySelector('.quantity-input');
+
+                    const productName = productNameInput.value.trim();
+                    const productCode = codeInput.value.trim();
+                    const quantity = parseInt(quantityInput.value) || 0;
+
+                    let selectedProduct = null;
+                    if (productName) {
+                        selectedProduct = products.find(p => p['Nombre Producto'].toLowerCase() === productName.toLowerCase());
+                    } else if (productCode) {
+                        selectedProduct = products.find(p => p['Código'] && p['Código'].toLowerCase() === productCode.toLowerCase());
+                    }
+
+                    if (selectedProduct) {
+                        const precioFinal = parseFloat(selectedProduct['PRECIO FINAL'] || 0);
+                        const contEfectivo = parseFloat(selectedProduct['cont efectivo'] || 0);
+                        const cuotas2 = parseFloat(selectedProduct['2 CUOTAS DE'] || 0);
+                        const cuotas3 = parseFloat(selectedProduct['3 CUOTAS DE'] || 0);
+                        const cuotas6 = parseFloat(selectedProduct['6 CUOTAS DE'] || 0);
+                        const cuotas9 = parseFloat(selectedProduct['9 CUOTAS DE'] || 0);
+                        const cuotas12 = parseFloat(selectedProduct['12 CUOTAS DE'] || 0);
+
+                        totalPrecioFinal += precioFinal * quantity;
+                        totalContEfectivo += contEfectivo * quantity;
+                        totalCuotas2 += cuotas2 * quantity;
+                        totalCuotas3 += cuotas3 * quantity;
+                        totalCuotas6 += cuotas6 * quantity;
+                        totalCuotas9 += cuotas9 * quantity;
+                        totalCuotas12 += cuotas12 * quantity;
+                    }
+                });
+
+                // Actualizar los spans de totales globales
+                grandTotalPrecioFinalSpan.textContent = currencyFormatter.format(totalPrecioFinal);
+                grandTotalContEfectivoSpan.textContent = currencyFormatter.format(totalContEfectivo);
+                grandTotalCuotas2Span.textContent = currencyFormatter.format(totalCuotas2);
+                grandTotalCuotas3Span.textContent = currencyFormatter.format(totalCuotas3);
+                grandTotalCuotas6Span.textContent = currencyFormatter.format(totalCuotas6);
+                grandTotalCuotas9Span.textContent = currencyFormatter.format(totalCuotas9);
+                grandTotalCuotas12Span.textContent = currencyFormatter.format(totalCuotas12);
+            }
+
+            // Event listener para el botón "Agregar Artículo"
+            addItemBtn.addEventListener('click', addProductRow);
+
+            // Event listener para el botón "Generar Presupuesto"
+            document.getElementById('generateBudgetBtn').addEventListener('click', function() {
+                const budgetItems = [];
+                let overallTotalPrecioFinal = 0;
+                let overallTotalContEfectivo = 0;
+                let overallTotalCuotas2 = 0; 
+                let overallTotalCuotas3 = 0;
+                let overallTotalCuotas6 = 0;
+                let overallTotalCuotas9 = 0;
+                let overallTotalCuotas12 = 0;
+
+                document.querySelectorAll('.item-row').forEach(row => {
+                    const productNameInput = row.querySelector('.product-name-input');
+                    const codeInput = row.querySelector('.code-input');
+                    const quantityInput = row.querySelector('.quantity-input');
+
+                    const productName = productNameInput.value.trim();
+                    const productCode = codeInput.value.trim();
+                    const quantity = parseInt(quantityInput.value) || 0;
+
+                    let selectedProduct = null;
+                    if (productName) {
+                        selectedProduct = products.find(p => p['Nombre Producto'].toLowerCase() === productName.toLowerCase());
+                    } else if (productCode) {
+                        selectedProduct = products.find(p => p['Código'] && p['Código'].toLowerCase() === productCode.toLowerCase());
+                    }
+
+                    if (selectedProduct) {
+                        const contEfectivoPerUnit = parseFloat(selectedProduct['cont efectivo'] || 0);
+                        const precioFinalPerUnit = parseFloat(selectedProduct['PRECIO FINAL'] || 0);
+                        const cuotas2PerUnit = parseFloat(selectedProduct['2 CUOTAS DE'] || 0);
+                        const cuotas3PerUnit = parseFloat(selectedProduct['3 CUOTAS DE'] || 0);
+                        const cuotas6PerUnit = parseFloat(selectedProduct['6 CUOTAS DE'] || 0);
+                        const cuotas9PerUnit = parseFloat(selectedProduct['9 CUOTAS DE'] || 0);
+                        const cuotas12PerUnit = parseFloat(selectedProduct['12 CUOTAS DE'] || 0);
+
+                        // Add to overall totals (summing per-unit prices * quantity)
+                        overallTotalPrecioFinal += precioFinalPerUnit * quantity;
+                        overallTotalContEfectivo += contEfectivoPerUnit * quantity;
+                        overallTotalCuotas2 += cuotas2PerUnit * quantity; 
+                        overallTotalCuotas3 += cuotas3PerUnit * quantity;
+                        overallTotalCuotas6 += cuotas6PerUnit * quantity;
+                        overallTotalCuotas9 += cuotas9PerUnit * quantity;
+                        overallTotalCuotas12 += cuotas12PerUnit * quantity;
+
+                        // Item data for detailed breakdown in alert (keeping individual per-unit prices)
+                        const itemData = {
+                            item: productName,
+                            codigo: selectedProduct['Código'] || 'N/A', // Usar el código del producto encontrado
+                            quantity: quantity,
+                            cont_efectivo_per_unit: contEfectivoPerUnit,
+                            precio_final_per_unit: precioFinalPerUnit,
+                            cuotas_2_per_unit: cuotas2PerUnit,
+                            cuotas_3_per_unit: cuotas3PerUnit,
+                            cuotas_6_per_unit: cuotas6PerUnit,
+                            cuotas_9_per_unit: cuotas9PerUnit,
+                            cuotas_12_per_unit: cuotas12PerUnit,
+                        };
+
+                        if (productName && quantity > 0) {
+                            budgetItems.push(itemData);
+                        }
+                    }
+                });
+
+                if (budgetItems.length === 0) {
+                    alert("No hay artículos seleccionados para generar el presupuesto.");
+                    return;
+                }
+
+                // Generar un resumen más detallado en el alert
+                let budgetSummary = "Resumen del Presupuesto:\n\n";
+                budgetItems.forEach(item => {
+                    budgetSummary += `Artículo: ${item.item} (Cód: ${item.codigo})\n`;
+                    budgetSummary += `Cantidad: ${item.quantity}\n`;
+                    budgetSummary += `Precio Final por unidad: ${currencyFormatter.format(item.precio_final_per_unit)}\n`;
+                    budgetSummary += `Contado Efectivo por unidad: ${currencyFormatter.format(item.cont_efectivo_per_unit)}\n`;
+
+                    if (item.cuotas_2_per_unit > 0) {
+                        budgetSummary += `2 Cuotas de: ${currencyFormatter.format(item.cuotas_2_per_unit)}\n`;
+                    }
+                    if (item.cuotas_3_per_unit > 0) {
+                        budgetSummary += `3 Cuotas de: ${currencyFormatter.format(item.cuotas_3_per_unit)}\n`;
+                    }
+                    if (item.cuotas_6_per_unit > 0) {
+                        budgetSummary += `6 Cuotas de: ${currencyFormatter.format(item.cuotas_6_per_unit)}\n`;
+                    }
+                    if (item.cuotas_9_per_unit > 0) {
+                        budgetSummary += `9 Cuotas de: ${currencyFormatter.format(item.cuotas_9_per_unit)}\n`;
+                    }
+                    if (item.cuotas_12_per_unit > 0) {
+                        budgetSummary += `12 Cuotas de: ${currencyFormatter.format(item.cuotas_12_per_unit)}\n`;
+                    }
+                    budgetSummary += `\n`; 
+                });
+
+                budgetSummary += "--- TOTALES GLOBALES DEL PRESUPUESTO ---\n\n";
+                budgetSummary += `Total Global (Precio Final): ${currencyFormatter.format(overallTotalPrecioFinal)}\n`;
+                budgetSummary += `Total Global (Contado Efectivo): ${currencyFormatter.format(overallTotalContEfectivo)}\n`;
+                
+                if (overallTotalCuotas2 > 0) {
+                    budgetSummary += `Total Global (2 Cuotas de): ${currencyFormatter.format(overallTotalCuotas2)}\n`;
+                }
+                if (overallTotalCuotas3 > 0) {
+                    budgetSummary += `Total Global (3 Cuotas de): ${currencyFormatter.format(overallTotalCuotas3)}\n`;
+                }
+                if (overallTotalCuotas6 > 0) {
+                    budgetSummary += `Total Global (6 Cuotas de): ${currencyFormatter.format(overallTotalCuotas6)}\n`;
+                }
+                if (overallTotalCuotas9 > 0) {
+                    budgetSummary += `Total Global (9 Cuotas de): ${currencyFormatter.format(overallTotalCuotas9)}\n`;
+                }
+                if (overallTotalCuotas12 > 0) {
+                    budgetSummary += `Total Global (12 Cuotas de): ${currencyFormatter.format(overallTotalCuotas12)}\n`;
+                }
+                
+                alert(budgetSummary);
+            });
+
+            // Agrega las datalists globales al final del body (o donde mejor convenga en tu estructura HTML)
+            const globalProductDatalist = document.createElement('datalist');
+            globalProductDatalist.id = 'productListOptions';
+            document.body.appendChild(globalProductDatalist);
+
+            const globalCodeDatalist = document.createElement('datalist');
+            globalCodeDatalist.id = 'codeListOptions';
+            document.body.appendChild(globalCodeDatalist);
+
+
+            // Cargar productos y añadir la primera fila al cargar la página
+            await fetchProducts();
+            addProductRow(); 
+        });
+    </script>
+</body>
+</html>

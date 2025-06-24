@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Menú Interior</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1A237E;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin-top: 50px;
+      font-size: 2.5rem;
+    }
+
+    .container {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      width: 90%;
+      max-width: 700px;
+    }
+
+    .card {
+      background-color: #3949AB;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: background-color 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: white;
+    }
+
+    .card:hover {
+      background-color: #303F9F;
+    }
+
+    .logout {
+      margin-top: 60px;
+      padding: 12px 24px;
+      background-color: #E53935;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .logout:hover {
+      background-color: #B71C1C;
+    }
+  </style>
+</head>
+<body>
+  <h1>Menú Interior</h1>
+  <div class="container">
+    <a href="#" class="card">Listado de precios</a>
+    <a href="#" class="card">Registrar venta de colchones</a>
+    <a href="#" class="card">Registrar pago de cuota de colchón</a>
+    <a href="#" class="card">Registrar salida de ataúd</a>
+  </div>
+  <a href="{{ url_for('logout') }}" class="logout">Cerrar sesión</a>
+</body>
+</html>

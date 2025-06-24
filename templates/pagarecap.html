@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registros de Pagarés - Tu Empresa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Definición de variables CSS para colores y sombras */
+        :root {
+            --primary-color: #28a745; /* Verde Bootstrap Success */
+            --primary-hover-color: #218838;
+            --secondary-color: #6c757d; /* Gris Bootstrap Secondary */
+            --background-light: #f8f9fa; /* Fondo claro */
+            --background-medium: #eef2f7; /* Fondo medio */
+            --card-background: #ffffff; /* Fondo para tarjetas/secciones */
+            --text-dark: #1d3557; /* Texto oscuro principal */
+            --text-muted: #667e91; /* Texto secundario/apagado */
+            --border-color: #e0e6ed; /* Color de borde */
+            --shadow-light: 0 4px 12px rgba(0,0,0,0.08); /* Sombra ligera */
+            --shadow-hover: 0 6px 16px rgba(0,0,0,0.12); /* Sombra al pasar el mouse */
+        }
+
+        body {
+            background-color: var(--background-medium);
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        h2, h5 {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+        }
+
+        .container-fluid {
+            padding: 2.5rem;
+            position: relative;
+        }
+
+        /* Estilos de la tabla */
+        .tabla-resumen {
+            background-color: var(--card-background);
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .table-sm th, .table-sm td {
+            padding: 0.5rem;
+        }
+
+        .tabla-resumen td {
+            font-size: 0.78rem;
+            vertical-align: middle;
+            color: #555;
+        }
+
+        .tabla-resumen th {
+            color: var(--text-dark);
+            font-weight: 600;
+            white-space: nowrap;
+            font-size: 0.8rem;
+        }
+
+        .tabla-resumen thead {
+            background-color: var(--background-light);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tabla-resumen tbody tr:hover {
+            background-color: #e6f7ff;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        /* Botón de volver al menú */
+        .btn-volver-menu {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            z-index: 1000;
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        .btn-volver-menu:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+            transform: translateY(-1px);
+        }
+
+        /* Estilos para el botón "Agregar Pago" */
+        .btn-agregar-pago {
+            background-color: #007bff; /* Azul Bootstrap Primary */
+            border-color: #007bff;
+            color: white;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 0.3rem;
+        }
+        .btn-agregar-pago:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        /* Estilos para las secciones de formulario y detalles */
+        .credit-details-section, .add-payment-form-section, .expected-payments-section {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: var(--shadow-light);
+            margin-bottom: 2rem;
+            display: none; /* Inicialmente oculto */
+        }
+
+        .credit-details-section h5, .add-payment-form-section h5, .expected-payments-section h5 {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-control, .form-select {
+            border-color: var(--border-color);
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            padding: 0.6rem 0.75rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            padding: 0.6rem 1.25rem;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover-color);
+            border-color: var(--primary-hover-color);
+            transform: translateY(-1px);
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.3rem;
+            display: block;
+        }
+
+        .list-group-item {
+            font-size: 0.9rem;
+            padding: 0.75rem 1.25rem;
+            border-color: var(--border-color);
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.4em 0.6em;
+            border-radius: 0.25rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-badge.registrado { background-color: #28a745; color: white; } /* Éxito */
+        .status-badge.pendiente { background-color: #17a2b8; color: white; } /* Información */
+        .status-badge.vencido { background-color: #dc3545; color: white; }   /* Peligro */
+
+        /* Nueva clase para filas con todos los pagos completos */
+        .payments-complete-row {
+            background-color: #d4edda; /* Light green */
+            color: #155724; /* Dark green text */
+            font-weight: bold;
+            opacity: 0.8;
+        }
+        /* Ajuste del botón para filas con pagos completos */
+        .payments-complete-row .btn-agregar-pago {
+            background-color: #6c757d; /* Gris para indicar completado */
+            border-color: #6c757d;
+            /* Eliminamos 'cursor: not-allowed;' y 'transform: none;' para que sea clickeable y tenga hover */
+            cursor: pointer;
+        }
+        .payments-complete-row .btn-agregar-pago:hover {
+            background-color: #5a6268; /* Un gris un poco más oscuro al pasar el mouse */
+            border-color: #5a6268;
+            transform: translateY(-1px); /* Mantener el efecto hover */
+        }
+
+
+        /* Mensajes Flash */
+        .alert {
+            margin-top: 1rem;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+        }
+        .alert-success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    {# Botón Volver al Menú #}
+    <a href="{{ url_for('menu2') }}" class="btn btn-secondary btn-volver-menu">
+        <i class="fas fa-arrow-left me-2"></i>Volver al Menú
+    </a>
+
+    <h2 class="text-center mb-5">
+        <i class="fas fa-file-alt me-3"></i>Registros de Pagarés
+    </h2>
+
+    {# Sección para mostrar mensajes flash de Flask (éxito, error, info) #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar alerta"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {# Sección Superior: Tabla de Registros de Pagarés #}
+    <div class="tabla-resumen">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover table-bordered mb-0" id="pagaresTable">
+                <thead>
+                    <tr>
+                        <th>N° de Factura</th>
+                        <th>Fecha de Venta</th>
+                        <th>Nombre Completo</th>
+                        <th>DNI</th>
+                        <th>Teléfono</th>
+                        <th>Domicilio</th>
+                        <th>Artículo Vendido</th>
+                        <th>Tipo de Pago</th>
+                        <th>Detalle de Venta</th>
+                        <th>Vendedor</th>
+                        <th>Monto Total</th> {# Nueva columna para el Monto Total del crédito #}
+                        <th>Acciones</th> {# Columna para el botón de acción #}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reg in all_registros %} {# 'all_registros' ahora se pasa desde el backend, filtrado por pagarés #}
+                        <tr {% if reg.get('all_payments_complete', False) %}class="payments-complete-row"{% endif %}>
+                            <td>{{ reg.get('n° de factura', '') }}</td>
+                            <td>{{ reg.get('fecha de venta', '') }}</td>
+                            <td>{{ reg.get('nombre completo', '') }}</td>
+                            <td>{{ reg.get('dni', '') }}</td>
+                            <td>{{ reg.get('tel', '') }}</td>
+                            <td>{{ reg.get('domicilio', '') }}</td>
+                            <td>{{ reg.get('articulo vendido', '') }}</td>
+                            <td>{{ reg.get('tipo de pago', '') }}</td>
+                            <td>{{ reg.get('detalle de venta', '') }}</td>
+                            <td>{{ reg.get('vendedor', '') }}</td>
+                            <td>{{ reg.get('monto', '') | default('N/A') }}</td> {# Muestra el monto total del crédito #}
+                            <td>
+                                <button type="button" 
+                                        class="btn btn-agregar-pago"
+                                        {# El JavaScript decidirá si el botón está "completo" o no #}
+                                        onclick="showCreditDetails('{{ reg.get('dni', '') }}')">
+                                    <i class="fas fa-plus-circle me-1"></i>
+                                    {% if reg.get('all_payments_complete', False) %}Pagos Completos{% else %}Agregar Pago{% endif %}
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {# Mensaje si no hay registros de pagarés #}
+        {% if not all_registros %}
+            <div class="alert alert-info text-center mt-4" role="alert">
+                <i class="fas fa-info-circle me-2"></i>No hay registros de pagarés para mostrar.
+            </div>
+        {% endif %}
+    </div>
+
+    {# Sección Inferior: Detalles del Crédito y Formulario de Pago #}
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-10">
+            <div class="row">
+                {# Columna Izquierda: Formulario para Registrar Nuevo Pago Adicional #}
+                <div class="col-md-6">
+                    <div id="addPaymentFormSection" class="add-payment-form-section">
+                        <h5 class="mb-4"><i class="fas fa-cash-register me-2"></i>Registrar Pago Adicional</h5>
+                        <form method="POST" action="{{ url_for('pagarecap') }}">
+                            <input type="hidden" name="dni_cliente_hidden" id="dni_cliente_hidden">
+                            <input type="hidden" name="next_slot_to_fill" id="next_slot_to_fill">
+                            
+                            <div class="mb-3">
+                                <label for="paymentFactura">Factura del Pago</label>
+                                <input type="text" name="new_factura" id="paymentFactura" class="form-control" required aria-label="Factura del Pago">
+                            </div>
+                            <div class="mb-3">
+                                <label for="paymentFecha">Fecha del Pago</label>
+                                <input type="date" name="new_fecha" id="paymentFecha" class="form-control" required aria-label="Fecha del Pago">
+                            </div>
+                            <div class="mb-3">
+                                <label for="paymentTipo">Tipo de Pago</label>
+                                <select name="new_tipo" id="paymentTipo" class="form-select" required aria-label="Tipo de Pago">
+                                    <option value="efectivo">Efectivo</option>
+                                    <option value="transferencia">Transferencia</option>
+                                    <option value="tarjeta">Tarjeta</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                            </div>
+                            {# --- NUEVO INPUT PARA MONTO DEL PAGO ADICIONAL --- #}
+                            <div class="mb-3">
+                                <label for="newPaymentMonto">Monto del Pago Adicional</label>
+                                <input type="number" name="new_monto" id="newPaymentMonto" class="form-control" step="0.01" placeholder="0.00" required aria-label="Monto del Pago Adicional">
+                            </div>
+                            {# --- FIN NUEVO INPUT --- #}
+                            <button type="submit" class="btn btn-primary mt-3 w-100" id="submitPaymentBtn">
+                                <i class="fas fa-check-circle me-2"></i>Registrar Pago
+                            </button>
+                            <div id="paymentFormMessage" class="mt-3"></div>
+                        </form>
+                    </div>
+                </div>
+
+                {# Columna Derecha: Detalles del Crédito y Pagos Esperados #}
+                <div class="col-md-6">
+                    <div id="creditDetailsSection" class="credit-details-section">
+                        <h5 class="mb-4"><i class="fas fa-info-circle me-2"></i>Detalles del Crédito Seleccionado</h5>
+                        <div id="creditDetailsContent">
+                            {# Aquí se llenarán los detalles del crédito con JavaScript #}
+                            <p><strong>Factura N°:</strong> <span id="detailFactura"></span></p>
+                            <p><strong>DNI:</strong> <span id="detailDni"></span></p>
+                            <p><strong>Cliente:</strong> <span id="detailNombreCompleto"></span></p>
+                            <p><strong>Fecha de Venta:</strong> <span id="detailFechaVenta"></span></p>
+                            <p><strong>Artículo Vendido:</strong> <span id="detailArticulo"></span></p>
+                            <p><strong>Tipo de Pago Original:</strong> <span id="detailTipoPago"></span></p>
+                            <p><strong>Detalle de Venta:</strong> <span id="detailDetalleVenta"></span></p>
+                            <p><strong>Vendedor:</strong> <span id="detailVendedor"></span></p>
+                            <p><strong>Monto Total del Crédito:</strong> <span id="detailMontoTotal"></span></p> {# Muestra el monto total del crédito #}
+                        </div>
+
+                        <div id="registeredPaymentsSection" class="mt-4">
+                            <h5 class="mb-3"><i class="fas fa-list-alt me-2"></i>Pagos Adicionales Registrados</h5>
+                            <div id="registeredPaymentsContent">
+                                <table class="table table-striped table-bordered table-custom">
+                                    <thead>
+                                        <tr>
+                                            <th>Pago N°</th>
+                                            <th>Factura Pago</th>
+                                            <th>Fecha Pago</th>
+                                            <th>Tipo de Pago</th>
+                                            <th>Monto</th> {# NUEVA COLUMNA PARA MONTO DEL PAGO ADICIONAL #}
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="paymentsTableBody">
+                                        {# Los pagos se insertarán aquí #}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="noPaymentsMessage" class="alert alert-info text-center" role="alert" style="display: none;">
+                                <i class="fas fa-info-circle me-2"></i>No hay pagos adicionales registrados para este crédito.
+                            </div>
+                        </div>
+
+                        <div id="expectedPaymentsSection" class="mt-4">
+                            <h5 class="mb-3"><i class="fas fa-bell me-2"></i>Estado de Pagos Esperados</h5>
+                            <ul class="list-group" id="expectedPaymentsList">
+                                {# Aquí se llenarán los pagos esperados con JavaScript #}
+                            </ul>
+                            <div id="noExpectedPaymentsMessage" class="alert alert-info text-center" role="alert" style="display: none;">
+                                <i class="fas fa-info-circle me-2"></i>No hay fechas de pago adicionales definidas para este tipo de crédito.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Establecer la fecha actual por defecto en el campo de fecha del formulario de nuevo pago
+        const paymentFechaInput = document.getElementById('paymentFecha');
+        if (paymentFechaInput) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            paymentFechaInput.value = `${year}-${month}-${day}`;
+        }
+
+        // Recuperar DNI del parámetro de URL si existe y mostrar detalles
+        const urlParams = new URLSearchParams(window.location.search);
+        const dniParam = urlParams.get('dni');
+        if (dniParam) {
+            console.log("DOMC - DNI detectado en la URL:", dniParam); // Debug
+            showCreditDetails(dniParam);
+        } else {
+            console.log("DOMC - No DNI detectado en la URL al cargar la página. Ocultando secciones."); // Debug
+            // Ocultar las secciones si no hay DNI en la URL
+            document.getElementById('addPaymentFormSection').style.display = 'none';
+            document.getElementById('creditDetailsSection').style.display = 'none';
+        }
+    });
+
+    async function showCreditDetails(dni) {
+        console.log("showCreditDetails llamada con DNI:", dni); // Debug: Function call start
+
+        const addPaymentFormSection = document.getElementById('addPaymentFormSection');
+        const creditDetailsSection = document.getElementById('creditDetailsSection');
+        const paymentFormMessage = document.getElementById('paymentFormMessage');
+        const submitPaymentBtn = document.getElementById('submitPaymentBtn');
+
+        // Formateador de moneda para ARS
+        const currencyFormatter = new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+
+        // Limpiar mensajes anteriores
+        paymentFormMessage.innerHTML = '';
+        paymentFormMessage.className = 'mt-3'; // Reset class
+
+        // Mostrar las secciones
+        addPaymentFormSection.style.display = 'block';
+        creditDetailsSection.style.display = 'block';
+
+        // Desplazar a la vista del formulario
+        addPaymentFormSection.scrollIntoView({ behavior: 'smooth' });
+
+        try {
+            const response = await fetch(`/api/get_credit_details/${dni}`);
+            const data = await response.json();
+            console.log("API Response Data:", data); // Debug: Full API response content
+
+            if (response.ok) {
+                const credit = data.credit_data;
+                const payments = data.payments_data;
+                const nextSlot = data.next_payment_slot; // Can be null if no more slots
+                const maxPayments = data.max_additional_payments;
+                const expectedPayments = data.expected_payment_dates;
+
+                console.log("JS - nextSlot recibido:", nextSlot); // Debug
+                console.log("JS - maxPayments recibido:", maxPayments); // Debug
+                // The key condition: nextSlot must be a valid number AND less than or equal to the maximum allowed
+                const canAddMorePayments = (nextSlot !== null && typeof nextSlot === 'number' && nextSlot <= maxPayments);
+                console.log("JS - Condición 'canAddMorePayments' evalúa a:", canAddMorePayments); // Debug
+
+
+                // Llenar detalles del crédito
+                document.getElementById('detailFactura').textContent = credit['n° de factura'] || 'N/A';
+                document.getElementById('detailDni').textContent = credit['dni'] || 'N/A';
+                document.getElementById('detailNombreCompleto').textContent = credit['nombre completo'] || 'N/A';
+                document.getElementById('detailFechaVenta').textContent = credit['fecha de venta'] || 'N/A';
+                document.getElementById('detailArticulo').textContent = credit['articulo vendido'] || 'N/A';
+                document.getElementById('detailTipoPago').textContent = credit['tipo de pago'] || 'N/A';
+                document.getElementById('detailDetalleVenta').textContent = credit['detalle de venta'] || 'N/A';
+                document.getElementById('detailVendedor').textContent = credit['vendedor'] || 'N/A';
+                document.getElementById('detailMontoTotal').textContent = credit['monto'] ? parseFloat(credit['monto']).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) : 'N/A';
+
+
+                // Llenar formulario de pago adicional
+                document.getElementById('dni_cliente_hidden').value = dni;
+                document.getElementById('next_slot_to_fill').value = nextSlot || ''; // Ensure it's empty string if nextSlot is null
+
+                // Limpiar campos del formulario para el siguiente pago
+                document.getElementById('paymentFactura').value = '';
+                document.getElementById('paymentFecha').value = new Date().toISOString().slice(0, 10); // Current date
+                document.getElementById('paymentTipo').value = 'efectivo'; // Default value
+                document.getElementById('newPaymentMonto').value = ''; // Limpiar el nuevo campo de monto
+
+
+                // Habilitar/Deshabilitar formulario según si hay slots disponibles
+                if (canAddMorePayments) {
+                    addPaymentFormSection.querySelector('form').style.display = 'block';
+                    paymentFormMessage.innerHTML = '';
+                    submitPaymentBtn.disabled = false;
+                    console.log("JS: Formulario visible para slot:", nextSlot); // Debug
+                } else {
+                    addPaymentFormSection.querySelector('form').style.display = 'none';
+                    paymentFormMessage.innerHTML = `<div class="alert alert-success text-center" role="alert">
+                                                        <i class="fas fa-check-circle me-2"></i>¡Todos los pagos adicionales para este crédito han sido registrados!
+                                                    </div>`;
+                    submitPaymentBtn.disabled = true; 
+                    console.log("JS: Formulario oculto, mensaje de 'todos los pagos registrados' mostrado."); // Debug
+                }
+
+                // Populate registered additional payments
+                const paymentsTableBody = document.getElementById('paymentsTableBody');
+                paymentsTableBody.innerHTML = ''; // Clear table
+                const noPaymentsMessage = document.getElementById('noPaymentsMessage');
+
+                if (payments.length > 0) {
+                    noPaymentsMessage.style.display = 'none';
+                    payments.forEach(p => {
+                        const row = paymentsTableBody.insertRow();
+                        row.innerHTML = `
+                            <td>${p.slot}</td>
+                            <td>${p.factura}</td>
+                            <td>${p.fecha}</td>
+                            <td>${p.tipo}</td>
+                            <td>${p.monto ? currencyFormatter.format(parseFloat(p.monto)) : ''}</td> {# Mostrar monto formateado #}
+                            <td><span class="badge status-badge registrado">Registrado</span></td>
+                        `;
+                    });
+                } else {
+                    noPaymentsMessage.style.display = 'block';
+                }
+
+                // Populate expected payments
+                const expectedPaymentsList = document.getElementById('expectedPaymentsList');
+                expectedPaymentsList.innerHTML = ''; // Clear list
+                const noExpectedPaymentsMessage = document.getElementById('noExpectedPaymentsMessage');
+
+                if (expectedPayments.length > 0) {
+                    noExpectedPaymentsMessage.style.display = 'none';
+                    expectedPayments.forEach(ep => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                        listItem.innerHTML = `
+                            Pago N° ${ep.slot}: ${ep.fecha_esperada}
+                            <span class="badge status-badge ${ep.estado}">
+                                ${ep.estado.charAt(0).toUpperCase() + ep.estado.slice(1)}
+                            </span>
+                        `;
+                        expectedPaymentsList.appendChild(listItem);
+                    });
+                } else {
+                    noExpectedPaymentsMessage.style.display = 'block';
+                }
+
+            } else {
+                // Show API error
+                paymentFormMessage.innerHTML = `<div class="alert alert-danger" role="alert">
+                                                    Error al cargar detalles del crédito: ${data.error || 'Desconocido'}
+                                                </div>`;
+                // Si la API falla, ocultar las secciones para evitar mostrar información incorrecta
+                addPaymentFormSection.style.display = 'none';
+                creditDetailsSection.style.display = 'none';
+                console.error("JS - API Error Response:", data); // Debug: API error
+            }
+        } catch (error) {
+            console.error('JS - Error fetching credit details:', error); // Debug: Fetch error
+            paymentFormMessage.innerHTML = `<div class="alert alert-danger" role="alert">
+                                                Error de conexión al cargar detalles del crédito.
+                                            </div>`;
+            // Si hay un error de conexión, ocultar las secciones.
+            addPaymentFormSection.style.display = 'none';
+            creditDetailsSection.style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>
