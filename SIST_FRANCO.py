@@ -8,40 +8,50 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY')
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default-secret-key-for-dev')  # Valor por defecto para desarrollo
+app.config['SESSION_COOKIE_SECURE'] = True  # Solo enviar cookies sobre HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hora de sesión
+
 SCOPES = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 
 # --- Usuarios y roles ---
+# NOTA: En producción, usa variables de entorno directamente para las contraseñas
 USERS = {
     "admin": {
-        "password": generate_password_hash(os.getenv('ADMIN_PASSWORD', 'admin123')),
+        "password": os.getenv('ADMIN_PASSWORD', 'admin123'),  # No hashear aquí, ya que check_password_hash necesita el hash original
         "role": "admin"
     },
     "cristian": {
-        "password": generate_password_hash(os.getenv('CRISTIAN_PASSWORD', 'rivadavia620')),
+        "password": os.getenv('CRISTIAN_PASSWORD', 'rivadavia620'),
         "role": "supervisor"
     },
     "delfi": {
-        "password": generate_password_hash(os.getenv('DELFI_PASSWORD', 'rivadavia620')),
+        "password": os.getenv('DELFI_PASSWORD', 'rivadavia620'),
         "role": "supervisor"
     },
     "trento": {
-        "password": generate_password_hash(os.getenv('TRENTO_PASSWORD', 'trento')),
+        "password": os.getenv('TRENTO_PASSWORD', 'trento'),
         "role": "supervisor"
     },
     "tete": {
-        "password": generate_password_hash(os.getenv('TETE_PASSWORD', 'tete123')),
+        "password": os.getenv('TETE_PASSWORD', 'tete123'),
         "role": "interior"
     },
     "int2": {
-        "password": generate_password_hash(os.getenv('INT2_PASSWORD', 'int456')),
+        "password": os.getenv('INT2_PASSWORD', 'int456'),
         "role": "interior"
     },
     "int3": {
-        "password": generate_password_hash(os.getenv('INT3_PASSWORD', 'int789')),
+        "password": os.getenv('INT3_PASSWORD', 'int789'),
         "role": "interior"
     }
 }
+
+# Pre-hashear las contraseñas (solo para las contraseñas por defecto)
+for user in USERS.values():
+    if user['password'] and not user['password'].startswith('$pbkdf2:'):  # Solo hashear si no está ya hasheado
+        user['password'] = generate_password_hash(user['password'])
 
 # --- Decorador para rutas que requieren autenticación ---
 def login_required(role=None):
@@ -65,12 +75,16 @@ def login_required(role=None):
 
 # --- Helpers ---
 def get_google_sheets_client():
-    if os.path.exists("credentials.json"):
-        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", SCOPES)
-    else:
-        cred_dict = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT"))
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(cred_dict, SCOPES)
-    return gspread.authorize(creds)
+    try:
+        if os.path.exists("credentials.json"):
+            creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", SCOPES)
+        else:
+            cred_dict = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT", "{}"))
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(cred_dict, SCOPES)
+        return gspread.authorize(creds)
+    except Exception as e:
+        app.logger.error(f"Error al conectar con Google Sheets: {str(e)}")
+        return None
 
 def get_drive_file_id(url):
     if not url:
@@ -89,42 +103,19 @@ def login():
         usuario = request.form.get('usuario', '').strip()
         contraseña = request.form.get('contraseña', '').strip()
 
-        user = USERS.get(usuario)
-        if user and check_password_hash(user['password'], contraseña):
-            session['logged_in'] = True
-            session['usuario'] = usuario
-            session['role'] = user['role']
-
-            role_redirect = {
-                "admin": "menu1",
-                "supervisor": "menu2",
-                "interior": "menu3"
-            }
-            return redirect(url_for(role_redirect.get(user['role'], 'login')))
-        else:
-            flash("Usuario o contraseña incorrectos", "danger")
-
-    return render_template('login.html')
-
-
-# Rutas de autenticación
-@app.route('/')
-def home():
-    return redirect(url_for('login'))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        usuario = request.form.get('usuario', '').strip()
-        contraseña = request.form.get('contraseña', '').strip()
+        if not usuario or not contraseña:
+            flash("Por favor ingrese usuario y contraseña", "danger")
+            return render_template('login.html')
 
         user = USERS.get(usuario)
+        
         if user and check_password_hash(user['password'], contraseña):
+            session.permanent = True
             session['logged_in'] = True
             session['usuario'] = usuario
             session['role'] = user['role']
             
-            # Redirecciona al menú según el rol
+            # Redirección basada en rol
             role_redirect = {
                 "admin": "menu1",
                 "supervisor": "menu2",
@@ -139,19 +130,24 @@ def login():
 @app.route('/logout')
 def logout():
     session.clear()
+    flash("Has cerrado sesión correctamente.", "success")
     return redirect(url_for('login'))
 
 # Rutas de menú
 @app.route('/menu1')
 @login_required(role='admin')
 def menu1():
-    return render_template('menu1.html', user=session.get('user'))
+    return render_template('menu1.html', usuario=session.get('usuario'))
 
 @app.route('/menu2')
 @login_required(role='supervisor')
 def menu2():
-    return render_template('menu2.html', user=session.get('user'))
+    return render_template('menu2.html', usuario=session.get('usuario'))
 
+@app.route('/menu3')
+@login_required(role='interior')
+def menu3():
+    return render_template('menu3.html', usuario=session.get('usuario'))
 @app.route('/menu3')
 @login_required(role='interior')
 def menu3():
