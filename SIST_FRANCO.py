@@ -56,7 +56,7 @@ def get_google_sheets_client():
         # Primero intenta cargar desde un archivo local 'credentials.json' (para desarrollo local)
         if os.path.exists("credentials.json"):
             try:
-                creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+                app.gspread_client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope))
                 print("DEBUG: Credenciales cargadas desde 'credentials.json'.")
             except Exception as e:
                 raise Exception(f"ERROR: Error al cargar credenciales desde 'credentials.json': {e}")
@@ -87,12 +87,14 @@ def get_google_sheets_client():
                     print("DEBUG_CREDS: Credenciales decodificadas de Base64 y JSON cargado exitosamente.")
                 except (TypeError, json.JSONDecodeError, UnicodeDecodeError) as base64_error:
                     raise Exception(f"ERROR: La variable de entorno 'GOOGLE_SERVICE_ACCOUNT' no contiene JSON válido (ni plano ni Base64 codificado): {base64_error}")
+            
+            # Asignación directa a app.gspread_client
+            if cred_dict: # Asegurarse de que cred_dict no es None antes de usarlo
+                app.gspread_client = gspread.authorize(ServiceAccountCredentials.from_json_keyfile_dict(cred_dict, scope))
+            else:
+                raise Exception("ERROR: cred_dict es None después de todos los intentos de carga. Esto no debería ocurrir.")
 
-        app.gspread_client = gspread.authorize(creds)
     return app.gspread_client
-
-# Autoriza al cliente de gspread con las credenciales obtenidas (se moverá a get_google_sheets_client)
-# client = gspread.authorize(creds) # Esta línea se moverá dentro de la función
 
 
 # --- ENCABEZADOS ESPERADOS PARA LA HOJA "creditocap" ---
@@ -615,6 +617,7 @@ def pagarecap():
         spreadsheet = get_google_sheets_client().open(SPREADSHEET_NAME)
         hoja = spreadsheet.worksheet("creditocap")
         # ¡IMPORTANTE! Usar expected_headers aquí para que `all_records_raw` use el nuevo orden
+        # Esta línea se mueve para que esté disponible tanto para POST como para GET
         all_records_raw = hoja.get_all_records(expected_headers=CREDITOCAP_HEADERS) 
 
         if request.method == 'POST':
@@ -702,7 +705,7 @@ def pagarecap():
     
     # Lógica para GET (mostrar la tabla)
     try:
-        # all_records_raw ya fue obtenido con expected_headers
+        # all_records_raw ya fue obtenido con expected_headers al inicio de la función
         pagares_registros = []
         # CORREGIDO a 5: El máximo de slots que tu HTML y hoja soportan físicamente
         max_additional_slots_in_sheet = 5
