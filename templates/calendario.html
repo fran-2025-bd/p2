@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calendario de Abordaje</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: #f2f6fc;
+      font-family: 'Poppins', sans-serif;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 50px auto;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 40px;
+    }
+
+    h2, h3 {
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    #calendar {
+      margin-top: 30px;
+      border: 1px solid #e0e6ed;
+      border-radius: 15px;
+      padding: 20px;
+      background: #fdfefe;
+    }
+
+    .fc .fc-button-primary {
+      background: #009688;
+      border-color: #009688;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    .fc-event {
+      background-color: #00bfa5;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      padding: 4px 6px;
+    }
+
+    .table thead {
+      background: #34495e;
+      color: #fff;
+    }
+
+    .table tbody tr:hover {
+      background-color: #f0f4f8;
+    }
+
+    .modal-header {
+      background-color: #009688;
+      color: white;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+    }
+
+    .btn-info {
+      background-color: #5dade2;
+      border: none;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+        margin: 20px auto;
+      }
+
+      #calendar {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2 class="text-center">📅 Calendario de Abordaje</h2>
+
+    <div class="mb-4">
+      <label for="filtroMedico" class="form-label">Filtrar por Médico:</label>
+      <select id="filtroMedico" class="form-select">
+        <option value="">Todos</option>
+        {% for m in registros | map(attribute='medico') | unique %}
+          <option value="{{ m }}">{{ m }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div id="calendar"></div>
+
+    <hr class="my-5">
+
+    <h3 class="text-center">📄 Registros de Visitas</h3>
+
+    {% if registros %}
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Médico</th>
+            <th>Localidad</th>
+            <th>Pacientes</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for registro in registros %}
+          <tr>
+            <td>{{ registro.visitas }}</td>
+            <td>{{ registro.medico }}</td>
+            <td>{{ registro.localidad }}</td>
+            <td>{{ registro.pacientes_atendidos }}</td>
+           <td>
+            <button class="btn btn-sm btn-info btn-ver-detalle"
+                data-fecha="{{ registro.visitas }}"
+                data-medico="{{ registro.medico }}"
+                data-localidad="{{ registro.localidad }}"
+                data-pacientes="{{ registro.pacientes_atendidos }}">
+                <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-warning btn-editar"
+                data-fecha="{{ registro.visitas }}"
+                data-medico="{{ registro.medico }}"
+                data-localidad="{{ registro.localidad }}"
+                data-pacientes="{{ registro.pacientes_atendidos }}">
+                <i class="bi bi-pencil-square"></i>
+            </button>
+          </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-center text-muted fst-italic">No hay registros aún.</p>
+    {% endif %}
+
+    <div class="text-center mt-5">
+      <a href="{{ url_for('menu2') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left-circle"></i> Volver al Menú
+      </a>
+    </div>
+  </div>
+
+  <!-- MODAL: Detalles -->
+  <div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Detalles de la Visita</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="eventModalBody"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Nueva Visita -->
+  <div class="modal fade" id="newVisitModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <form method="POST" action="{{ url_for('calendario_abordaje') }}" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Nueva Visita</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="fecha_visita" id="inputFechaVisita">
+          <div class="mb-3">
+            <label class="form-label">Médico</label>
+            <input type="text" class="form-control" name="medico" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Localidad</label>
+            <input type="text" class="form-control" name="localidad" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Pacientes Atendidos</label>
+            <input type="number" class="form-control" name="pacientes_atendidos" min="0" value="0" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Guardar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales/es.global.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const calendarEl = document.getElementById('calendar');
+      const allEvents = {{ events | safe }};
+
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: allEvents,
+        dateClick: function (info) {
+          document.getElementById('inputFechaVisita').value = info.dateStr;
+          new bootstrap.Modal(document.getElementById('newVisitModal')).show();
+        },
+        eventClick: function (info) {
+          const p = info.event.extendedProps;
+          document.getElementById('eventModalBody').innerHTML = `
+            <p><strong>Fecha:</strong> ${p.fecha_visita}</p>
+            <p><strong>Médico:</strong> ${p.medico}</p>
+            <p><strong>Localidad:</strong> ${p.localidad}</p>
+            <p><strong>Pacientes:</strong> ${p.pacientes_atendidos}</p>
+          `;
+          new bootstrap.Modal(document.getElementById('eventModal')).show();
+        }
+      });
+
+      calendar.render();
+// Botón Editar
+document.querySelectorAll('.btn-editar').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const fecha = btn.getAttribute('data-fecha');
+    const medico = btn.getAttribute('data-medico');
+    const localidad = btn.getAttribute('data-localidad');
+    const pacientes = btn.getAttribute('data-pacientes');
+
+    document.getElementById('editFecha').value = fecha;
+    document.getElementById('editMedico').value = medico;
+    document.getElementById('editMedicoLabel').value = medico;
+    document.getElementById('editLocalidad').value = localidad;
+    document.getElementById('editPacientes').value = pacientes;
+
+    new bootstrap.Modal(document.getElementById('editVisitModal')).show();
+  });
+});
+
+      // Filtro por médico
+      document.getElementById('filtroMedico').addEventListener('change', function () {
+        const selected = this.value.toLowerCase();
+        const filtered = allEvents.filter(e =>
+          selected === '' || e.extendedProps.medico.toLowerCase() === selected
+        );
+        calendar.removeAllEvents();
+        calendar.addEventSource(filtered);
+      });
+
+      // Ver desde la tabla
+      document.querySelectorAll('.btn-ver-detalle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const fecha = btn.getAttribute('data-fecha');
+          const medico = btn.getAttribute('data-medico');
+          const localidad = btn.getAttribute('data-localidad');
+          const pacientes = btn.getAttribute('data-pacientes');
+          document.getElementById('eventModalBody').innerHTML = `
+            <p><strong>Fecha:</strong> ${fecha}</p>
+            <p><strong>Médico:</strong> ${medico}</p>
+            <p><strong>Localidad:</strong> ${localidad}</p>
+            <p><strong>Pacientes:</strong> ${pacientes}</p>
+          `;
+          new bootstrap.Modal(document.getElementById('eventModal')).show();
+        });
+      });
+    });
+  </script>
+<div class="modal fade" id="editVisitModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <form method="POST" action="{{ url_for('editar_abordaje') }}" class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title">Editar Visita</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="fecha" id="editFecha">
+        <input type="hidden" name="medico" id="editMedico">
+
+        <div class="mb-3">
+          <label class="form-label">Médico</label>
+          <input type="text" class="form-control" id="editMedicoLabel" disabled>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Localidad</label>
+          <input type="text" class="form-control" name="localidad" id="editLocalidad" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Pacientes Atendidos</label>
+          <input type="number" class="form-control" name="pacientes_atendidos" id="editPacientes" min="0" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>
