@@ -110,6 +110,7 @@ import re
 import io
 import traceback
 from functools import wraps
+from pdf_generator import create_budget_pdf # Cambia 'pdf_generator' si lo llamaste diferente
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -414,7 +415,22 @@ def get_drive_file_id(url):
     
     print(f"DEBUG: No se pudo extraer el ID de la imagen de '{url}'. Devolviendo ID vacío.")
     return ""
+# --- CONFIGURACIÓN (Mueve esta sección AQUÍ si actualmente está más abajo) ---
+# Asegúrate de que tu UPLOAD_FOLDER esté definido y configurado aquí,
+# justo después de 'app = Flask(__name__)'
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads') # Esta ruta debe apuntar a tus imágenes
 
+# Crea la carpeta si no existe (importante para que no haya errores si es la primera vez)
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# --- ESTA LÍNEA ES CRUCIAL Y DEBE ESTAR AQUÍ ---
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# También, asegúrate de que tu SECRET_KEY esté configurado para que funcionen los mensajes flash
+app.config['SECRET_KEY'] = 'una_clave_secreta_muy_segura_que_deberias_cambiar' # Cambia esto por una clave única y fuerte
+
+# --- Funciones Auxiliares ---
 
 # API para obtener items de lista1 con manejo de errores numéricos y URL de imagen
 @app.route('/api/get_lista1_items', methods=['GET'])
@@ -516,7 +532,18 @@ def get_image(file_id):
 @login_required()
 def presupuesto_creator():
     return render_template('presupuesto_creator.html')
+@app.route('/generate_budget_pdf', methods=['POST'])
+def generate_budget_pdf():
+    data = request.get_json()
+    items = data.get('items', [])
 
+    # Llama a la función desde el archivo externo, pasándole 'app' y los 'items'
+    pdf_file = create_budget_pdf(app, items)
+
+    if pdf_file is None:
+        return jsonify({'error': 'No se pudo generar el presupuesto: No hay artículos o error interno.'}), 400
+
+    return send_file(pdf_file, download_name='presupuesto.pdf', as_attachment=True, mimetype='application/pdf')
 
 # Ruta para la hoja de presupuestos
 @app.route('/presupuesto')
