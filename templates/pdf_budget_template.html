@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Presupuesto</title>
+    <style>
+        body { font-family: sans-serif; margin: 2cm; font-size: 10pt; }
+        h1 { text-align: center; color: #1d3557; margin-bottom: 1cm; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1cm; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .total-section { float: right; width: 40%; } /* Ajusta el ancho según necesidad */
+        .total-line { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .total-line span:last-child { font-weight: bold; color: #28a745; }
+        .cuotas-line { font-size: 9pt; color: #667e91; }
+        .product-image { max-width: 50px; max-height: 50px; object-fit: contain; vertical-align: middle; margin-right: 5px; }
+
+        /* Para evitar cortes de filas en el PDF */
+        tr { page-break-inside: avoid; }
+    </style>
+</head>
+<body>
+    <h1>Presupuesto</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th></th> {# Para la imagen #}
+                <th>Artículo</th>
+                <th>Código</th>
+                <th>Cantidad</th>
+                <th>P. Final Unitario</th>
+                <th>Subtotal P. Final</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td><img src="{{ url_for('get_image', file_id=item['file_id']) }}" class="product-image" alt="Producto"></td>
+                <td>{{ item['Nombre Producto'] }}</td>
+                <td>{{ item['Código'] }}</td>
+                <td>{{ item['cantidad'] }}</td>
+                <td>{{ "%.2f ARS" | format(item['PRECIO FINAL']) }}</td>
+                <td>{{ "%.2f ARS" | format(item['PRECIO FINAL'] * item['cantidad']) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <div class="total-line">Total P. Final: <span>{{ "%.0f ARS" | format(total_precio_final) }}</span></div>
+        <div class="total-line">Total Contado Efectivo: <span>{{ "%.0f ARS" | format(total_cont_efectivo) }}</span></div>
+        {# Aquí podrías añadir los totales de cuotas si los pasas desde Flask #}
+        {# <div class="total-line cuotas-line">Total 2 Cuotas (por unidad): <span>{{ "%.0f ARS" | format(total_cuotas2) }}</span></div> #}
+        {# ... y así sucesivamente #}
+    </div>
+
+</body>
+</html>
